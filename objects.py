@@ -63,6 +63,7 @@ class FunClsObj(ClsObj):
 
 """
 还有module, fun
+map对象比较特别, 在yank中就是对象, 所以map的remove是通过del实现的, map添加属性是通过.语法, 例如map.name="demo"
 """
 
 fun_cls = ClsObj('fun_cls')

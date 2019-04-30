@@ -73,6 +73,9 @@ class Parser(object):
             elif cur_char == '"':
                 self.parse_str(cur_token)
                 break
+            elif cur_char == "'":
+                self.parse_str_ex(cur_token)
+                break
             elif cur_char == '`':
                 self.parse_str_lines(cur_token)
                 break
@@ -304,6 +307,17 @@ class Parser(object):
         """
         cur_token.type = TOKEN_TYPE_STR
         token_str = self._parse_str(cur_token, '"')
+        cur_token.str = token_str
+        cur_token.line_num = self.line_num
+        cur_token.len = len(cur_token.str)
+        self.cur_token = cur_token
+
+    def parse_str_ex(self, cur_token):
+        """解析字符串, 修改cur_token的属性值, 与其他解析不同, parse_str在fetch_next_token函数中调用, 调用完毕直接返回
+        因为需要考虑字符串中控制字符
+        """
+        cur_token.type = TOKEN_TYPE_STR
+        token_str = self._parse_str(cur_token, "'")
         cur_token.str = token_str
         cur_token.line_num = self.line_num
         cur_token.len = len(cur_token.str)

@@ -9,7 +9,6 @@ from objects import *
 
 
 def main(argv=None):
-    """
     if len(argv) > 1:
         filename = argv[1]
         parser = Parser(filename)
@@ -29,6 +28,7 @@ def main(argv=None):
     print(call(li, 'tostr(_)')(li).str)
     age = call(m, 'get(_,_)')(m, StrObj('age'))
     print(call(age, 'tostr(_)')(age).str)
+    """
 
 if __name__ == '__main__':
     argv = sys.argv

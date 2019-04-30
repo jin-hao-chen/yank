@@ -37,5 +37,4 @@ class Person {
     }
 }
 
-p = Person.new("Foo", 20)
-p.say("Hello, world!")
+print('Hello world!')
