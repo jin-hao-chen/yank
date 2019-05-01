@@ -8,8 +8,7 @@ from parser import Token, Parser
 from objects import *
 
 
-def main(argv=None):
-    """
+def run_file(argv=None):
     if len(argv) > 1:
         filename = argv[1]
         parser = Parser(filename)
@@ -19,16 +18,21 @@ def main(argv=None):
                 print(parser.cur_token)
                 return
             print(parser.cur_token)
-    """
-    li = ListObj([IntObj(1), FloatObj(2.5), StrObj('Hello')])
-    call(li, 'insert(_,_,_)')(li, IntObj(0), FloatObj(100.0))
-    m = MapObj({StrObj('name'): StrObj('Chen Jinhao'), StrObj('age'): IntObj(20)})
-    call(li, 'append(_,_)')(li, m)
-    print(call(li, 'tostr(_)')(li).str)
-    call(m, '@put(_,_,_)')(m, StrObj('name'), StrObj('#'))
-    print(call(li, 'tostr(_)')(li).str)
-    age = call(m, '@get(_,_)')(m, StrObj('age'))
-    print(call(age, 'tostr(_)')(age).str)
+
+
+def main(argv=None):
+    person = MapObj({StrObj('name'): StrObj('JH'), StrObj('age'): IntObj(19)})
+    person_str = call(person, 'tostr(_)')(person)
+    print(person_str.str)
+
+    mymodule = ModuleObj('mymodule')
+    mymodule_str = call(mymodule, 'tostr(_)')(mymodule)
+    print(mymodule_str.str)
+
+    myfun = FunObj('myfun')
+    myfun_str = call(myfun, 'tostr(_)')(myfun)
+    print(myfun_str.str)
+    
 
 if __name__ == '__main__':
     argv = sys.argv

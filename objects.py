@@ -502,17 +502,15 @@ def map_bind_methods():
 def module_to_str(obj):
     return StrObj('<module>' + obj.name)
 
-def bind_module_methods():
+def module_bind_methods():
     module_cls.methods['tostr(_)'] = module_to_str
 
 def fun_to_str(obj):
     return StrObj('<fun>' + obj.name)
 
-def bind_fun_methods(obj):
+def fun_bind_methods():
     fun_cls.methods['tostr(_)'] = fun_to_str
 
-
-        
 
 class NilObj(object):
 
@@ -605,7 +603,7 @@ class Var(object):
         return self.name == other.name
 
 
-def ModuleObj(object):
+class ModuleObj(object):
 
     def __init__(self, name):
         self.obj_header = ObjHeader('module', module_cls, self)
@@ -627,7 +625,7 @@ def ModuleObj(object):
                 return i
         self.global_vars.append(var)
         self.global_var_num += 1
-        return self.global_var_num
+        return self.global_var_num - 1
 
 
     def clear_vars(self):
@@ -636,6 +634,8 @@ def ModuleObj(object):
 
 
 class FunObj(object):
+
+
     def __init__(self, name, scope=1, arg_num=0):
         self.obj_header = ObjHeader('fun', fun_cls, self)
         # 函数名, print用到
@@ -657,11 +657,35 @@ class FunObj(object):
                 return o
         self.local_vars.append(var)
         self.local_var_num += 1
-        return self.local_var_num
+        return self.local_var_num - 1
     
     def clear_vars(self):
         self.local_vars = []
-        self.global_var_num = 0
+        self.local_var_num = 0
+
+
+VAL_TYPE_NIL = 1
+VAL_TYPE_INT = 2
+VAL_TYPE_FLOAT = 3
+VAL_TYPE_STR = 4
+VAL_TYPE_LIST = 5
+VAL_TYPE_MAP = 6
+VAL_TYPE_MODULE = 7
+VAL_TYPE_FUN = 8
+VAL_TYPE_TRUE = 9
+VAL_TYPE_FALSE = 10
+VAL_TYPE_BOOL = 11
+
+
+class Value(object):
+
+
+    def __init__(self, obj_header, VAL_TYPE):
+        self.obj_header = obj_header
+        self.value_type = VAL_TYPE
+    
+    def obj(self):
+        return self.obj_header.obj
 
 
 class Frame(object):
@@ -672,12 +696,21 @@ class Frame(object):
         # 含头含尾
         self.end = self.start
 
+    def extend(self, steps=1):
+        self.end += steps
+        if self.thread.size - 1 - self.end <= 512:
+            self.thread.values.extend([Value(NilObj(), VAL_TYPE_NIL) for _ in range(self.thread.size)])
+            self.thread.size *= 2
+
+    def __str__(self):
+        return str((self.start, self.end))
+
 
 class Thread(object):
 
 
     def __init__(self, size=1024):
-        self.values = [0 for _ in range(size)]
+        self.values = [Value(NilObj(), VAL_TYPE_NIL) for _ in range(size)]
         self.frames = []
         self.frame_num = 0
         self.start = 0
@@ -691,30 +724,32 @@ class Thread(object):
             self.frame_num += 1
             return frame
         else:
-            cur_frame = self.frames[self.frame_num]
+            cur_frame = self.frames[self.frame_num - 1]
             next_idx = cur_frame.end + 1
             if self.size - 1 - next_idx <= 512:
-                self.frames.extend([0 for _ in range(self.size)])
+                self.values.extend([Value(NilObj(), VAL_TYPE_NIL) for _ in range(self.size)])
                 self.size *= 2
             frame = Frame(self, next_idx)
             self.frames.append(frame)
             self.frame_num += 1
-        return frame
+            return frame
 
     def recycle_frame(self):
         """
         回收当前的frame
         """
-        del self.frames[self.frame_num]
+        del self.frames[self.frame_num - 1]
         self.frame_num -= 1
         # 如果还有上一个frame就返回上一个frame
         if self.frame_num >= 1:
-            return self.frames[self.frame_num]
+            return self.frames[self.frame_num - 1]
         # 没有就返回None
         return None
     
 
 def bind_methods():
+    module_bind_methods()
+    fun_bind_methods()
     nil_bind_methods()
     bool_bind_methods()
     str_bind_methods()
