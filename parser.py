@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from color_print import *
 from tokentype import *
 
 
@@ -12,7 +13,7 @@ def read_src(filename, buf_size=1024):
         with open(filename, 'r') as fd:
             src += fd.read(buf_size)
     except Exception as e:
-        print("***Can't read file '%s'***" % filename)
+        fatal_print("Can't read file '%s'" % filename)
         sys.exit(1)
     return src
 
@@ -237,7 +238,7 @@ class Parser(object):
     # Y
     def to_next_token_danger(self, token_type, msg):
         if not self.to_next_token_if_cur_token_type_is(token_type):
-            print('***Parse error %s***' % msg)
+            fatal_print('Parse error, %s' % msg)
             sys.exit(1)
     
     # Y
@@ -290,11 +291,15 @@ class Parser(object):
                 token_str += self.peek_cur_char()
             if char == '"':
                 if self.cur_char_ptr >= self.src_len - 1 or self.peek_cur_char() == '\n':
-                    print('***line %s: string is not terminated by %s***' % (cur_token.line_num, char))
+                    fatal_print('Line %s, string is not terminated by %s' % (cur_token.line_num, char))
+                    sys.exit(1)
+            elif char == "'":
+                if self.cur_char_ptr >= self.src_len - 1 or self.peek_cur_char() == '\n':
+                    fatal_print('Line %s, string is not terminated by %s' % (cur_token.line_num, char))
                     sys.exit(1)
             elif char == '`':
                 if self.cur_char_ptr >= self.src_len - 1:
-                    print('***line %s: string is not terminated by `***' % (cur_token.line_num))
+                    fatal_print('Line %s, long string is not terminated by `' % (cur_token.line_num))
                     sys.exit(1)
         token_str += char
         return token_str

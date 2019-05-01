@@ -1,7 +1,7 @@
 import mymodule
 
 fun add(a, b) {
-    let sum = a + b
+    sum = a + b
     return sum
 }
 
@@ -9,7 +9,7 @@ a = 10
 b = 20
 sum = add(a, b)
 
-print("Sum is " + sum.str())
+print("Sum is " + sum.tostr())
 
 msg = "This is darling3"
 print(msg)
@@ -20,21 +20,10 @@ print(users)
 print(scores)
 
 
-# This is comments
-# Define Class
-
-class Person {
-    let name;
-    let age;
-    
-    +new(self, name, age) {
-        self.name = name
-        self.age = age
-    }
-    
-    say(self, words) {
-        print(words)
-    }
+fun say(words) {
+    print(words)
 }
+
+Person = {'name': 'JH', age: 20, 'say': say}
 
 print('Hello world!')
