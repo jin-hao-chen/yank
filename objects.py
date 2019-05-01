@@ -25,6 +25,10 @@ def type_to_pystr(obj):
         return nil_to_str(obj).str
     elif obj.obj_header.obj_type == 'bool':
         return bool_to_str(obj).str
+    elif obj.obj_header.obj_type == 'fun':
+        return fun_to_str(obj).str
+    elif obj.obj_header.obj_type == 'module':
+        return module_to_str(obj).str
 
 def is_type(obj, name):
     return obj.obj_header.obj_type == name
@@ -71,7 +75,7 @@ class VM(object):
 还有module, fun
 map对象比较特别, 在yank中就是对象, map的remove, put, get在内部的方式是@remove, @put, @get, 因为yank中通过map实现对象的, 模仿一下js
 """
-
+module_cls = ClsObj('module_cls')
 fun_cls = ClsObj('fun_cls')
 nil_cls = ClsObj('nil_cls')
 bool_cls = ClsObj('bool_cls')
@@ -495,25 +499,20 @@ def map_bind_methods():
     map_cls.methods['@remove(_,_)'] = map_remove
 
 
-class FunObj(object):
-    """
-    函数对象与模块对象共用一个FunObj对象表示, 因为他们都是可以执行代码的最小单元
-    """
+def module_to_str(obj):
+    return StrObj('<module>' + obj.name)
 
-    def __init__(self):
-        self.obj_header = ObjHeader('fun', fun_cls, self)
-        self.stream = []
-        self.cur_idx = 0
-        
-        # 为函数时使用
-        self.arg_num = 0
-        self.local_vars = []
-        self.local_var_num = 0
-        
-        # 为模块时使用
-        self.constants = []
-        self.constant_num = 0
+def bind_module_methods():
+    module_cls.methods['tostr(_)'] = module_to_str
 
+def fun_to_str(obj):
+    return StrObj('<fun>' + obj.name)
+
+def bind_fun_methods(obj):
+    fun_cls.methods['tostr(_)'] = fun_to_str
+
+
+        
 
 class NilObj(object):
 
@@ -589,7 +588,132 @@ class MapObj(object):
         self.obj_header = ObjHeader('map', map_cls, self)
         self.map = dict(map_)
 
+
+# Var不是一个对象, 只是一个在运行时栈中的辅助对象
+class Var(object):
     
+
+    def __init__(self, name, scope=0):
+        """
+        scope为0是模块作用域, 值越大, 作用域越小
+        """
+        self.name = name
+        self.scope = scope
+    
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
+def ModuleObj(object):
+
+    def __init__(self, name):
+        self.obj_header = ObjHeader('module', module_cls, self)
+        # 模块名, print时用到
+        self.name = name
+        # 存放运行时指令
+        self.stream = []
+        self.cur_idx = 0
+        
+        # var是另外一个结构不是对象
+        # global_vars就是一张表
+        self.global_vars = [] 
+        self.global_var_num = 0
+         
+    
+    def add_var(self, var):
+        for i in range(len(self.global_vars)):
+            if var == self.global_vars[i]:
+                return i
+        self.global_vars.append(var)
+        self.global_var_num += 1
+        return self.global_var_num
+
+
+    def clear_vars(self):
+        self.global_vars = []
+        self.global_var_num = 0
+
+
+class FunObj(object):
+    def __init__(self, name, scope=1, arg_num=0):
+        self.obj_header = ObjHeader('fun', fun_cls, self)
+        # 函数名, print用到
+        self.name = name
+        # 存放运行时指令
+        self.stream = []
+        self.cur_idx = 0
+        
+        self.scope = scope
+        self.arg_num = arg_num
+        # var是另外一个结构, 不是对象
+        # local_vars就是一张表
+        self.local_vars = []
+        self.local_var_num = 0
+
+    def add_var(self, var):
+        for i in range(len(self.global_vars)):
+            if var == self.global_vars[i]:
+                return o
+        self.local_vars.append(var)
+        self.local_var_num += 1
+        return self.local_var_num
+    
+    def clear_vars(self):
+        self.local_vars = []
+        self.global_var_num = 0
+
+
+class Frame(object):
+
+    def __init__(self, thread, start):
+        self.thread = thread
+        self.start = start
+        # 含头含尾
+        self.end = self.start
+
+
+class Thread(object):
+
+
+    def __init__(self, size=1024):
+        self.values = [0 for _ in range(size)]
+        self.frames = []
+        self.frame_num = 0
+        self.start = 0
+        self.size = size
+    
+    def alloc_frame(self):
+        # 第一个frame
+        if not self.frames:
+            frame = Frame(self, self.start)
+            self.frames.append(frame)
+            self.frame_num += 1
+            return frame
+        else:
+            cur_frame = self.frames[self.frame_num]
+            next_idx = cur_frame.end + 1
+            if self.size - 1 - next_idx <= 512:
+                self.frames.extend([0 for _ in range(self.size)])
+                self.size *= 2
+            frame = Frame(self, next_idx)
+            self.frames.append(frame)
+            self.frame_num += 1
+        return frame
+
+    def recycle_frame(self):
+        """
+        回收当前的frame
+        """
+        del self.frames[self.frame_num]
+        self.frame_num -= 1
+        # 如果还有上一个frame就返回上一个frame
+        if self.frame_num >= 1:
+            return self.frames[self.frame_num]
+        # 没有就返回None
+        return None
+    
+
 def bind_methods():
     nil_bind_methods()
     bool_bind_methods()
@@ -598,6 +722,7 @@ def bind_methods():
     float_bind_methods()
     list_bind_methods()
     map_bind_methods()
+
 
 bind_methods()
 
