@@ -3,6 +3,7 @@
 
 
 import sys
+from color_print import *
 
 
 def call(obj, method_name):
@@ -125,13 +126,13 @@ def str_hash(obj):
 
 def str_add(obj1, obj2):
     if obj2.obj_header.obj_type != 'str':
-        print('***Run error: obj2 must be str***')
+        fatal_print('Run error, arg2 must be string')
         sys.exit(1)
     return StrObj(obj1.str + obj2.str)
 
 def str_at(obj1, obj2):
     if obj2.obj_header.obj_type != 'int':
-        print('***Run error: index must be int***')
+        fatal_print('Run error, index must be int')
         sys.exit(1)
     return StrObj(obj1.str[obj2.int])
 
@@ -171,7 +172,7 @@ def int_add(obj1, obj2):
         obj1 = int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: %s obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == 'float':
@@ -185,7 +186,7 @@ def int_sub(obj1, obj2):
         obj1 = int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == 'float':
@@ -199,7 +200,7 @@ def int_mul(obj1, obj2):
         obj1 = int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == 'float':
@@ -213,34 +214,34 @@ def int_div(obj1, obj2):
         obj1 = int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == 'float':
         if obj2.float == 0.0:
-            print('***Run error: obj2 is 0***')
+            fatal_print('Run error, arg2 cannot be 0')
             sys.exit(1)
         return FloatObj(obj1.float / obj2.float)
 
     if obj1.obj_header.obj_type == 'int':
         if obj2.int == 0:
-            print('***Run error: obj2 is 0***')
+            fatal_print('Run error, arg2 cannot be 0')
             sys.exit(1)
         return IntObj(obj1.int / obj2.int)
 
 def int_mod(obj1, obj2):
     if obj2.obj_header.obj_type != 'int':
-        print('***Run error: obj2 should be int***')
+        fatal_print('Run error, arg2 must be int')
         sys.exit(1)
     
     if obj2.int == 0:
-        print('***Run error: obj2 is 0***')
+        fatal_print('Run error, arg2 cannot be 0')
         sys.exit(1)
     return IntObj(obj1.int % obj2.int)
 
 def int_gt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     obj1 = int_to_float(obj1)
     if obj2.obj_header.obj_type == 'int':
@@ -249,7 +250,7 @@ def int_gt(obj1, obj2):
 
 def int_ge(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, args is not a number')
         sys.exit(1)
     obj1 = int_to_float(obj1)
     
@@ -259,7 +260,7 @@ def int_ge(obj1, obj2):
 
 def int_lt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, args is not a number')
         sys.exit(1)
     obj1 = int_to_float(obj1)
 
@@ -312,7 +313,7 @@ def float_add(obj1, obj2):
         obj2 = int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: %s obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     
     return FloatObj(obj1.float + obj2.float)
@@ -322,7 +323,7 @@ def float_sub(obj1, obj2):
         obj2 = int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: %s obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float - obj2.float)
 
@@ -331,7 +332,7 @@ def float_mul(obj1, obj2):
         obj2 = int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: %s obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float * obj2.float)
 
@@ -340,15 +341,15 @@ def float_div(obj1, obj2):
         obj2 = int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: %s obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     if obj2.float == 0:
-        print('***Run error: obj2 is 0***')
+        fatal_print('Run error, arg2 cannot be 0')
     return FloatObj(obj1.float / obj2.float)
 
 def float_gt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2) 
@@ -356,7 +357,7 @@ def float_gt(obj1, obj2):
 
 def float_ge(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2) 
@@ -364,7 +365,7 @@ def float_ge(obj1, obj2):
 
 def float_lt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2) 
@@ -372,7 +373,7 @@ def float_lt(obj1, obj2):
 
 def float_le(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
-        print('***Run error: obj2 is not a number***')
+        fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2) 
@@ -406,7 +407,7 @@ def list_to_str(obj):
 
 def list_at(obj1, obj2):
     if obj2.obj_header.obj_type != 'int':
-        print('***Run error: obj2 must be int***')
+        fatal_print('Run error, arg2 must be int')
         sys.exit(1)
     return obj1.list[obj2.int]
 
@@ -414,7 +415,7 @@ def list_insert(obj1, obj2, obj3):
     """obj2: 下标
     """
     if obj2.obj_header.obj_type != 'int':
-        print('***Run error: index must be int***')
+        fatal_print('Run error, index must be int')
         sys.exit(1)
     obj1.list.insert(obj2.int, obj3)
     
@@ -425,11 +426,11 @@ def list_remove(obj1, obj2):
     """obj2: 下标
     """
     if obj2.obj_header.obj_type != 'int':
-        print('***Run error: index must be int***')
+        fatal_print('Run error, index must be int')
         sys.exit(1)
     length = list_len(obj1) 
     if obj2.int >= length or obj2.int < 0:
-        print('***Run error: index out of rang***')
+        fatal_print('Run error, index out of rang')
         sys.exit(1)
     del obj1.list[obj2.int]
 
@@ -445,16 +446,16 @@ def list_bind_methods():
 
 def map_put(obj, key, val):
     if key.obj_header.obj_type in ['map', 'list']:
-        print('***Run error: map or list cannot be hashed***')
+        fatal_print('Run error, map or list cannot be hashed')
         sys.exit(1)
     obj.map[key] = val
 
 def map_get(obj, key):
     if key.obj_header.obj_type == 'nil':
-        print('***Run error: key cannot be nil***')
+        fatal_print('Run error, key cannot be nil')
         sys.exit(1)
     if key.obj_header.obj_type in ['map', 'list']:
-        print('***Run error: map or list cannot be hashed***')
+        fatal_print('Run error, map or list cannot be hashed')
         sys.exit(1)
     if key not in obj.map:
         return NilObj()
@@ -462,10 +463,10 @@ def map_get(obj, key):
 
 def map_remove(obj, key):
     if key.obj_header.obj_type == 'nil':
-        print('***Run error: key cannot be nil***')
+        fatal_print('Run error, key cannot be nil')
         sys.exit(1)
     if key.obj_header.obj_type in ['map', 'list']:
-        print('***Run error: map or list cannot be hashed***')
+        fatal_print('Run error, map or list cannot be hashed')
         sys.exit(1)
     if key in obj.map:
         del obj.map[key]
