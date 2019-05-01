@@ -30,8 +30,10 @@ def type_to_pystr(obj):
     elif obj.obj_header.obj_type == 'module':
         return module_to_str(obj).str
 
+
 def is_type(obj, name):
     return obj.obj_header.obj_type == name
+
 
 def args_num(pystr):
     left = pystr.find('(')
@@ -71,10 +73,6 @@ class VM(object):
         self.map_cls = map_cls
 
 
-"""
-还有module, fun
-map对象比较特别, 在yank中就是对象, map的remove, put, get在内部的方式是@remove, @put, @get, 因为yank中通过map实现对象的, 模仿一下js
-"""
 module_cls = ClsObj('module_cls')
 fun_cls = ClsObj('fun_cls')
 nil_cls = ClsObj('nil_cls')
@@ -83,60 +81,62 @@ str_cls = ClsObj('str_cls')
 int_cls = ClsObj('int_cls')
 float_cls = ClsObj('float_cls')
 list_cls = ClsObj('list_cls')
+
+# map对象比较特别, 在yank中就是对象, map的remove, put, get在内部的方式是@remove, @put, @get, 因为yank中通过map实现对象的, 模仿一下js
 map_cls = ClsObj('map_cls')
 
-vm = VM()
 
-########################### fun methods ###########################
-# for function object, not for methods of bool, str, int and so on.
 # 参数被封装成了yank_list
-# 出现say(_,_)这种形式时
-
 def fun_call(obj, args):
     # obj为fun object
     # 执行的是指令流
     pass
 
-############################ nil methods ###########################
 
 def nil_to_str(obj):
     return StrObj(str(obj.nil))
+
 
 def nil_equ(obj1, obj2):
     if obj2.obj_header.obj_type != 'nil':
         return BoolObj(False)
     return BoolObj(True)
 
+
 def nil_bind_methods():
     nil_cls.methods['tostr(_)'] = nil_to_str
     nil_cls.methods['==(_,_)'] = nil_equ
 
-############################# bool methods ###################
 
 def bool_to_str(obj):
     return StrObj(str(obj.bool))
 
+
 def bool_equ(obj1, obj2):
     return BoolObj(obj1.bool == obj2.bool)
 
+
 def bool_hash(obj):
     return IntObj(hash(obj.bool))
+
 
 def bool_bind_methods():
     bool_cls.methods['tostr(_)'] = bool_to_str
     bool_cls.methods['==(_,_)'] = bool_equ
     bool_cls.methods['hash(_)'] = bool_hash
 
-############################ str methods #######################
 
 def str_to_str(obj):
     return obj
 
+
 def str_equ(obj1, obj2):
     return BoolObj(obj1.str == obj2.str)
 
+
 def str_hash(obj):
     return IntObj(hash(obj.str))
+
 
 def str_add(obj1, obj2):
     if obj2.obj_header.obj_type != 'str':
@@ -144,17 +144,21 @@ def str_add(obj1, obj2):
         sys.exit(1)
     return StrObj(obj1.str + obj2.str)
 
+
 def str_at(obj1, obj2):
     if obj2.obj_header.obj_type != 'int':
         fatal_print('Run error, index must be int')
         sys.exit(1)
     return StrObj(obj1.str[obj2.int])
 
+
 def str_len(obj):
     return IntObj(len(obj.str))
 
+
 def str_emtpy(obj):
     return BoolObj(len(obj.str) == 0)
+
 
 def str_bind_methods():
     str_cls.methods['tostr(_)'] = str_to_str
@@ -166,20 +170,21 @@ def str_bind_methods():
     str_cls.methods['empty(_)'] = str_emtpy
 
 
-# 数字类型在运行时进行了类型检验
-############################## int methods ####################
-
 def int_to_str(obj):
     return StrObj(str(obj.int))
+
 
 def int_equ(obj1, obj2):
     return BoolObj(obj1.int == obj2.int)
 
+
 def int_hash(obj):
     return IntObj(hash(obj.int))
 
+
 def int_to_float(obj):
     return FloatObj(float(obj.int))
+
 
 def int_add(obj1, obj2):
     if obj2.obj_header.obj_type == 'float':
@@ -195,6 +200,7 @@ def int_add(obj1, obj2):
     if obj1.obj_header.obj_type == 'int':
         return IntObj(obj1.int + obj2.int)
 
+
 def int_sub(obj1, obj2):
     if obj2.obj_header.obj_type == 'float':
         obj1 = int_to_float(obj1)
@@ -209,6 +215,7 @@ def int_sub(obj1, obj2):
     if obj1.obj_header.obj_type == 'int':
         return IntObj(obj1.int - obj2.int)
 
+
 def int_mul(obj1, obj2):
     if obj2.obj_header.obj_type == 'float':
         obj1 = int_to_float(obj1)
@@ -222,6 +229,7 @@ def int_mul(obj1, obj2):
 
     if obj1.obj_header.obj_type == 'int':
         return IntObj(obj1.int * obj2.int)
+
 
 def int_div(obj1, obj2):
     if obj2.obj_header.obj_type == 'float':
@@ -243,6 +251,7 @@ def int_div(obj1, obj2):
             sys.exit(1)
         return IntObj(obj1.int / obj2.int)
 
+
 def int_mod(obj1, obj2):
     if obj2.obj_header.obj_type != 'int':
         fatal_print('Run error, arg2 must be int')
@@ -253,6 +262,7 @@ def int_mod(obj1, obj2):
         sys.exit(1)
     return IntObj(obj1.int % obj2.int)
 
+
 def int_gt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
         fatal_print('Run error, arg2 is not a number')
@@ -261,6 +271,7 @@ def int_gt(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2)
     return BoolObj(obj1.float > obj2.float)
+
 
 def int_ge(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
@@ -272,6 +283,7 @@ def int_ge(obj1, obj2):
         obj2 = int_to_float(obj2)
     return BoolObj(obj1.float >= obj2.float)
 
+
 def int_lt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
         fatal_print('Run error, args is not a number')
@@ -281,6 +293,7 @@ def int_lt(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2)
     return BoolObj(obj1.float < obj2.float)
+
 
 def int_le(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
@@ -308,19 +321,21 @@ def int_bind_methods():
     int_cls.methods['<=(_,_)'] = int_le
     
 
-############################# float methods #######################
-
 def float_to_str(obj):
     return StrObj(str(obj.float))
+
 
 def float_equ(obj1, obj2):
     return BoolObj(obj1.float == obj2.float)
 
+
 def float_hash(obj):
     return IntObj(hash(obj.float))
 
+
 def float_to_int(obj1):
     return IntObj(int(obj1.float))
+
 
 def float_add(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
@@ -332,6 +347,7 @@ def float_add(obj1, obj2):
     
     return FloatObj(obj1.float + obj2.float)
 
+
 def float_sub(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2)
@@ -341,6 +357,7 @@ def float_sub(obj1, obj2):
         sys.exit(1)
     return FloatObj(obj1.float - obj2.float)
 
+
 def float_mul(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2)
@@ -349,6 +366,7 @@ def float_mul(obj1, obj2):
         fatal_print('Run error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float * obj2.float)
+
 
 def float_div(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
@@ -361,6 +379,7 @@ def float_div(obj1, obj2):
         fatal_print('Run error, arg2 cannot be 0')
     return FloatObj(obj1.float / obj2.float)
 
+
 def float_gt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
         fatal_print('Run error, arg2 is not a number')
@@ -368,6 +387,7 @@ def float_gt(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2) 
     return BoolObj(obj1.float > obj2.float)
+
 
 def float_ge(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
@@ -377,6 +397,7 @@ def float_ge(obj1, obj2):
         obj2 = int_to_float(obj2) 
     return BoolObj(obj1.float >= obj2.float)
 
+
 def float_lt(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
         fatal_print('Run error, arg2 is not a number')
@@ -385,6 +406,7 @@ def float_lt(obj1, obj2):
         obj2 = int_to_float(obj2) 
     return BoolObj(obj1.float < obj2.float)
 
+
 def float_le(obj1, obj2):
     if obj2.obj_header.obj_type not in ['float', 'int']:
         fatal_print('Run error, arg2 is not a number')
@@ -392,6 +414,7 @@ def float_le(obj1, obj2):
     if obj2.obj_header.obj_type == 'int':
         obj2 = int_to_float(obj2) 
     return BoolObj(obj1.float <= obj2.float)
+
 
 def float_bind_methods():
     float_cls.methods['tostr(_)'] = float_to_str
@@ -407,10 +430,10 @@ def float_bind_methods():
     float_cls.methods['<(_,_)'] = float_lt
     float_cls.methods['<=(_,_)'] = float_le
 
-################################ list methods ########################
 
 def list_len(obj):
     return IntObj(len(obj.list))
+
 
 def list_to_str(obj):
     s = '['
@@ -419,26 +442,28 @@ def list_to_str(obj):
     s = s[:-1] + ']'
     return StrObj(s)
 
+
 def list_at(obj1, obj2):
     if obj2.obj_header.obj_type != 'int':
         fatal_print('Run error, arg2 must be int')
         sys.exit(1)
     return obj1.list[obj2.int]
 
+
 def list_insert(obj1, obj2, obj3):
-    """obj2: 下标
-    """
+    # obj2为下标
     if obj2.obj_header.obj_type != 'int':
         fatal_print('Run error, index must be int')
         sys.exit(1)
     obj1.list.insert(obj2.int, obj3)
     
+
 def list_append(obj1, obj2):
     obj1.list.append(obj2)
 
+
 def list_remove(obj1, obj2):
-    """obj2: 下标
-    """
+    # obj2为下标
     if obj2.obj_header.obj_type != 'int':
         fatal_print('Run error, index must be int')
         sys.exit(1)
@@ -464,6 +489,7 @@ def map_put(obj, key, val):
         sys.exit(1)
     obj.map[key] = val
 
+
 def map_get(obj, key):
     if key.obj_header.obj_type == 'nil':
         fatal_print('Run error, key cannot be nil')
@@ -475,6 +501,7 @@ def map_get(obj, key):
         return NilObj()
     return obj.map[key]
 
+
 def map_remove(obj, key):
     if key.obj_header.obj_type == 'nil':
         fatal_print('Run error, key cannot be nil')
@@ -484,6 +511,7 @@ def map_remove(obj, key):
         sys.exit(1)
     if key in obj.map:
         del obj.map[key]
+
 
 def map_to_str(obj):
     s = '{'
@@ -502,17 +530,21 @@ def map_bind_methods():
 def module_to_str(obj):
     return StrObj('<module>' + obj.name)
 
+
 def module_bind_methods():
     module_cls.methods['tostr(_)'] = module_to_str
 
+
 def fun_to_str(obj):
     return StrObj('<fun>' + obj.name)
+
 
 def fun_bind_methods():
     fun_cls.methods['tostr(_)'] = fun_to_str
 
 
 class NilObj(object):
+
 
     def __init__(self):
         self.obj_header = ObjHeader('nil', nil_cls, self)
@@ -524,7 +556,9 @@ class NilObj(object):
     def __eq__(self, other):
         return hash(self.nil) == hash(other.nil)
 
+
 class BoolObj(object):
+
 
     def __init__(self, boolean):
         self.obj_header = ObjHeader('bool', bool_cls, self)
@@ -539,6 +573,7 @@ class BoolObj(object):
 
 class StrObj(object):
     
+
     def __init__(self, string):
         self.obj_header = ObjHeader('str', str_cls, self) 
         self.str = str(string)
@@ -552,6 +587,7 @@ class StrObj(object):
 
 class IntObj(object):
 
+
     def __init__(self, integer):
         self.obj_header = ObjHeader('int', int_cls, self)
         self.int = int(integer)
@@ -562,7 +598,9 @@ class IntObj(object):
     def __eq__(self, other):
         return hash(self.int) == hash(other.int)
 
+
 class FloatObj(object):
+
 
     def __init__(self, float_):
         self.obj_header = ObjHeader('float', float_cls, self)
@@ -574,13 +612,17 @@ class FloatObj(object):
     def __eq__(self, other):
         return hash(self.float) == hash(other.float)
 
+
 class ListObj(object):
+
 
     def __init__(self, list_):
         self.obj_header = ObjHeader('list', list_cls, self)
         self.list = list(list_)
 
+
 class MapObj(object):
+
 
     def __init__(self, map_):
         self.obj_header = ObjHeader('map', map_cls, self)
@@ -597,13 +639,13 @@ class Var(object):
         """
         self.name = name
         self.scope = scope
-    
 
     def __eq__(self, other):
         return self.name == other.name
 
 
 class ModuleObj(object):
+
 
     def __init__(self, name):
         self.obj_header = ObjHeader('module', module_cls, self)
@@ -618,7 +660,6 @@ class ModuleObj(object):
         self.global_vars = [] 
         self.global_var_num = 0
          
-    
     def add_var(self, var):
         for i in range(len(self.global_vars)):
             if var == self.global_vars[i]:
@@ -626,7 +667,6 @@ class ModuleObj(object):
         self.global_vars.append(var)
         self.global_var_num += 1
         return self.global_var_num - 1
-
 
     def clear_vars(self):
         self.global_vars = []
@@ -690,6 +730,7 @@ class Value(object):
 
 class Frame(object):
 
+
     def __init__(self, thread, start):
         self.thread = thread
         self.start = start
@@ -735,8 +776,7 @@ class Thread(object):
             return frame
 
     def recycle_frame(self):
-        """
-        回收当前的frame
+        """回收当前的frame
         """
         del self.frames[self.frame_num - 1]
         self.frame_num -= 1
@@ -747,7 +787,7 @@ class Thread(object):
         return None
     
 
-def bind_methods():
+def _bind_methods():
     module_bind_methods()
     fun_bind_methods()
     nil_bind_methods()
@@ -759,11 +799,15 @@ def bind_methods():
     map_bind_methods()
 
 
-bind_methods()
+_bind_methods()
+
+vm = VM()
 
 
 def main(argv=None):
     pass
 
+
 if __name__ == '__main__':
     main()
+

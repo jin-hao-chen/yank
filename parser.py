@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 import sys
 from color_print import *
 from tokentype import *
 
 
-# Y
 def read_src(filename, buf_size=1024):
     src = ''
     try:
@@ -19,6 +19,7 @@ def read_src(filename, buf_size=1024):
 
 
 class Token(object):
+
 
     def __init__(self, ptr, line_num, token_type=TOKEN_TYPE_UNKNOWN):
         self.type = token_type
@@ -33,6 +34,7 @@ class Token(object):
 
 class Parser(object):
 
+
     def __init__(self, filename):
         self.filename = filename
         self.src = read_src(filename)
@@ -43,7 +45,7 @@ class Parser(object):
         self.pre_token = None
         self.cur_token = Token(-1, self.line_num)
     
-    # Y
+
     def fetch_next_token(self):
         """给语法分析器和语义分析器调用的接口, 获取下一个token对象
         """
@@ -92,9 +94,7 @@ class Parser(object):
                 else:
                     cur_token.type = TOKEN_TYPE_SUB
             elif cur_char == '*':
-                """
-                * or **
-                """
+                # * or **
                 cur_token.ptr = self.cur_char_ptr
                 if self.to_next_char_if_next_char_is('*'):
                     cur_token.type = TOKEN_TYPE_POWER
@@ -107,27 +107,21 @@ class Parser(object):
             elif cur_char == '^':
                 cur_token.type = TOKEN_TYPE_LOGIC_XOR
             elif cur_char == '=':
-                """
-                = or ==
-                """
+                # = or ==
                 cur_token.ptr = self.cur_char_ptr
                 if self.to_next_char_if_next_char_is('='):
                     cur_token.type = TOKEN_TYPE_EQU
                 else:
                     cur_token.type = TOKEN_TYPE_ASSIGN
             elif cur_char == '!':
-                """
-                !=
-                """
+                # !=
                 cur_token.ptr = self.cur_char_ptr
                 if self.to_next_char_if_next_char_is('='):
                     cur_token.type = TOKEN_TYPE_NEQU
                 else:
                     lex_error("line %s: '!' cannot appear alone" % cur_token.line_num)
             elif cur_char == '>':
-                """
-                > or >= or >>
-                """
+                # > or >= or >>
                 cur_token.ptr = self.cur_char_ptr
                 if self.to_next_char_if_next_char_is('>'):
                     cur_token.type = TOKEN_TYPE_LOGIC_SHR
@@ -137,9 +131,7 @@ class Parser(object):
                     cur_token.type = TOKEN_TYPE_GT
 
             elif cur_char == '<':
-                """
-                < or <= or <<
-                """
+                # < or <= or <<
                 cur_token.ptr = self.cur_char_ptr
                 if self.to_next_char_if_next_char_is('<'):
                     cur_token.type = TOKEN_TYPE_LOGIC_SHL
@@ -182,31 +174,26 @@ class Parser(object):
             self.cur_token = cur_token
             break
     
-    # Y
     def peek_cur_char(self):
         return self.src[self.cur_char_ptr]
     
-    # Y
     def peek_next_char(self):
         return self.src[self.next_char_ptr]
     
-    # Y
     def peek_remain_src(self):
         return self.src[self.cur_char_ptr:]
 
-    # Y
     def to_next_char_if_next_char_is(self, char):
         if self.next_char_ptr <= self.src_len - 1 and self.peek_next_char() == char:
             self.to_next_char()
             return True
         return False
-    # Y 
+    
     def to_next_char(self):
         if self.next_char_ptr <= self.src_len - 1:
             self.cur_char_ptr = self.next_char_ptr
             self.next_char_ptr += 1
 
-    # Y
     def skip_one_line(self):
         while self.next_char_ptr <= self.src_len - 1 and self.peek_cur_char() != '\n':
             self.to_next_char()
@@ -215,33 +202,26 @@ class Parser(object):
             self.to_next_char()
             self.line_num += 1
     
-    # Y
     def skip_comment(self):
         # 在调用skip_comment之前, 已经判断cur_char为';'
         self.skip_one_line()
     
-    # Y
     def skip_blanks(self):
         while self.next_char_ptr <= self.src_len - 1 and self.peek_cur_char() == ' ':
             self.to_next_char()
     
-    # Y
     def to_next_token_if_cur_token_type_is(self, token_type):
-        """
-        调用该方法时, self.cur_token已经是一个完整的Token了
-        """
+        # 调用该方法时, self.cur_token已经是一个完整的Token了
         if self.cur_token.type == token_type:
             self.fetch_next_token()
             return True
         return False
     
-    # Y
     def to_next_token_danger(self, token_type, msg):
         if not self.to_next_token_if_cur_token_type_is(token_type):
             fatal_print('Parse error, %s' % msg)
             sys.exit(1)
     
-    # Y
     def parse_id(self, cur_token):
         while self.next_char_ptr <= self.src_len - 1 and (self.peek_next_char().isalnum() or self.peek_next_char() == '_'):
             self.to_next_char()
@@ -252,18 +232,17 @@ class Parser(object):
         else:
             cur_token.type = TOKEN_TYPE_ID
         
-    # Y
     def _parse_str(self, cur_token, char):
         """被parse_str和parse_str_lines函数调用, 用于读取源码中的字符串
-        Parameters
-        ----------
+        参数
+        ----
         cur_token : Token
             当前parser处理的token
         char : character
             在soledad中, 字符串的表示有""和``两种, char用来分辨以哪种结尾, char为"和`其中一个
 
-        Returns
-        -------
+        返回
+        ----
         token_str : str
             解析出来的字符串
         """
@@ -304,8 +283,6 @@ class Parser(object):
         token_str += char
         return token_str
 
-
-    # Y
     def parse_str(self, cur_token):
         """解析字符串, 修改cur_token的属性值, 与其他解析不同, parse_str在fetch_next_token函数中调用, 调用完毕直接返回
         因为需要考虑字符串中控制字符
@@ -328,7 +305,6 @@ class Parser(object):
         cur_token.len = len(cur_token.str)
         self.cur_token = cur_token
     
-    # Y
     def parse_str_lines(self, cur_token):
         """解析多行字符串, 修改cur_token的属性值, 与其他解析不同, parse_str在fetch_next_token函数中调用, 调用完毕直接返回
         因为需要考虑字符串中控制字符
@@ -340,7 +316,6 @@ class Parser(object):
         cur_token.len = len(cur_token.str)
         self.cur_token = cur_token
         
-    # Y
     def _parse_decimal_num(self):
         while self.next_char_ptr <= self.src_len - 1 and self.peek_next_char().isnumeric():
             self.cur_char_ptr = self.next_char_ptr
@@ -366,7 +341,6 @@ class Parser(object):
                 (self.peek_next_char() >= '0' and self.peek_next_char() <= '1'):
             self.to_next_char()
 
-    # Y
     def parse_num(self, cur_token):
         """解析数字, 包括整数, 小数和负数
         """
@@ -387,22 +361,20 @@ class Parser(object):
                 self.to_next_char()
                 self._parse_binary_num()
     
-    # Y
     def print_remained_src(self):
         """开发调试辅助函数, 剩余需要解析的字符串
         """
         print('***Debug***' + self.src[self.cur_char_ptr: self.cur_char_ptr + self.src_len])
 
 
-# Y
 def get_token_type_str(token):
     """根据传入的token对象的类型返回该token的类型的字符串表达
-    Parameters
-    ----------
+    参数
+    ----
     token : Token
 
-    Returns
-    --------
+    返回
+    ----
     str : str
     """
     token_type = token.type
