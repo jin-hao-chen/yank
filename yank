@@ -9,6 +9,7 @@ from objects import *
 
 
 def main(argv=None):
+    """
     if len(argv) > 1:
         filename = argv[1]
         parser = Parser(filename)
@@ -24,11 +25,10 @@ def main(argv=None):
     m = MapObj({StrObj('name'): StrObj('Chen Jinhao'), StrObj('age'): IntObj(20)})
     call(li, 'append(_,_)')(li, m)
     print(call(li, 'tostr(_)')(li).str)
-    call(m, 'put(_,_,_)')(m, StrObj('name'), StrObj('#'))
+    call(m, '@put(_,_,_)')(m, StrObj('name'), StrObj('#'))
     print(call(li, 'tostr(_)')(li).str)
-    age = call(m, 'get(_,_)')(m, StrObj('age'))
+    age = call(m, '@get(_,_)')(m, StrObj('age'))
     print(call(age, 'tostr(_)')(age).str)
-    """
 
 if __name__ == '__main__':
     argv = sys.argv

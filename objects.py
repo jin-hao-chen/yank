@@ -52,19 +52,24 @@ class ClsObj(object):
         self.name = name
         self.methods = {}
 
-class FunClsObj(ClsObj):
+
+class VM(object):
 
 
-    def __init__(self, name):
-        super(ClsObj, self).__init__(name)
-        self.stream = []
-        self.cur_idx = 0
-        self.local_vars = []
-        self.args_num = 0
+    def __init__(self):
+        self.fun_cls = fun_cls
+        self.nil_cls = nil_cls
+        self.bool_cls = bool_cls
+        self.str_cls = str_cls
+        self.int_cls = int_cls
+        self.float_cls = float_cls
+        self.list_cls = list_cls
+        self.map_cls = map_cls
+
 
 """
 还有module, fun
-map对象比较特别, 在yank中就是对象, 所以map的remove是通过del实现的, map添加属性是通过.语法, 例如map.name="demo"
+map对象比较特别, 在yank中就是对象, map的remove, put, get在内部的方式是@remove, @put, @get, 因为yank中通过map实现对象的, 模仿一下js
 """
 
 fun_cls = ClsObj('fun_cls')
@@ -76,11 +81,16 @@ float_cls = ClsObj('float_cls')
 list_cls = ClsObj('list_cls')
 map_cls = ClsObj('map_cls')
 
+vm = VM()
 
 ########################### fun methods ###########################
 # for function object, not for methods of bool, str, int and so on.
 # 参数被封装成了yank_list
+# 出现say(_,_)这种形式时
+
 def fun_call(obj, args):
+    # obj为fun object
+    # 执行的是指令流
     pass
 
 ############################ nil methods ###########################
@@ -480,9 +490,29 @@ def map_to_str(obj):
 
 def map_bind_methods():
     map_cls.methods['tostr(_)'] = map_to_str
-    map_cls.methods['put(_,_,_)'] = map_put
-    map_cls.methods['get(_,_)'] = map_get
-    map_cls.methods['remove(_,_)'] = map_remove
+    map_cls.methods['@put(_,_,_)'] = map_put
+    map_cls.methods['@get(_,_)'] = map_get
+    map_cls.methods['@remove(_,_)'] = map_remove
+
+
+class FunObj(object):
+    """
+    函数对象与模块对象共用一个FunObj对象表示, 因为他们都是可以执行代码的最小单元
+    """
+
+    def __init__(self):
+        self.obj_header = ObjHeader('fun', fun_cls, self)
+        self.stream = []
+        self.cur_idx = 0
+        
+        # 为函数时使用
+        self.arg_num = 0
+        self.local_vars = []
+        self.local_var_num = 0
+        
+        # 为模块时使用
+        self.constants = []
+        self.constant_num = 0
 
 
 class NilObj(object):
