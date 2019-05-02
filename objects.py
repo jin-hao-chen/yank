@@ -89,7 +89,6 @@ class Thread(object):
         return None
 
 
-
 class NilObj(object):
 
 
@@ -214,6 +213,12 @@ class ModuleObj(object):
         self.global_vars.append(var)
         self.global_var_num += 1
         return self.global_var_num - 1
+    
+    def find_var(self, var):
+        for i in range(len(self.global_vars)):
+            if var == self.global_vars[i]:
+                return i
+        return -1
 
     def clear_vars(self):
         self.global_vars = []
@@ -239,12 +244,18 @@ class FunObj(object):
         self.local_var_num = 0
 
     def add_var(self, var):
-        for i in range(len(self.global_vars)):
+        for i in range(len(self.local_vars)):
             if var == self.global_vars[i]:
-                return o
+                return i
         self.local_vars.append(var)
         self.local_var_num += 1
         return self.local_var_num - 1
+    
+    def find_var(self, var):
+        for i in range(len(self.local_vars)):
+            if var == self.local_vars[i]:
+                return i
+        return -1
     
     def clear_vars(self):
         self.local_vars = []

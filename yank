@@ -9,6 +9,7 @@ from parser import (Token, Parser)
 from objects import (call, type_to_pystr, is_type, args_num, vm)
 from objects import (ObjHeader, ClsObj, NilObj, BoolObj, StrObj, IntObj, \
         FloatObj, ListObj, MapObj, ModuleObj, FunObj, Value, Var)
+from compiler import CompileUnit, Loop
 
 
 def run_file(argv=None):
@@ -22,8 +23,7 @@ def run_file(argv=None):
                 return
             print(parser.cur_token)
 
-
-def main(argv=None):
+def test_object():
     person = MapObj({StrObj('name'): StrObj('JH'), StrObj('age'): IntObj(19)})
     person_str = call(person, 'tostr(_)')(person)
     print(person_str.str)
@@ -35,7 +35,17 @@ def main(argv=None):
     myfun = FunObj('myfun')
     myfun_str = call(myfun, 'tostr(_)')(myfun)
     print(myfun_str.str)
-    
+
+    li = ListObj([IntObj(90), IntObj(89)])
+    call(person, '@put(_,_,_)')(person, StrObj('scores'), li)
+    person_str = call(person, 'tostr(_)')(person)
+    print(person_str.str)
+
+
+def main(argv=None):
+    parser = Parser('example.y')
+    cu = CompileUnit(parser)
+    print(cu.compile())
 
 if __name__ == '__main__':
     argv = sys.argv
