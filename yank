@@ -5,9 +5,10 @@
 import os
 import sys
 from tokentype import *
-from parser import Token, Parser
-from objects import call, type_to_pystr, is_type, args_num, vm
-from objects import ObjHeader, ClsObj, NilObj, BoolObj, StrObj, IntObj, FloatObj, ListObj, MapObj, ModuleObj, FunObj
+from parser import (Token, Parser)
+from objects import (call, type_to_pystr, is_type, args_num, vm)
+from objects import (ObjHeader, ClsObj, NilObj, BoolObj, StrObj, IntObj, \
+        FloatObj, ListObj, MapObj, ModuleObj, FunObj, Value, Var)
 
 
 def run_file(argv=None):

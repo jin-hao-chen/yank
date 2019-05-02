@@ -684,8 +684,8 @@ def list_len(obj):
 def list_to_str(obj):
     s = '['
     for item in obj.list:
-        s += type_to_pystr(item) + ','
-    s = s[:-1] + ']'
+        s += type_to_pystr(item) + ', '
+    s = s[:-2] + ']'
     return StrObj(s)
 
 
@@ -762,8 +762,8 @@ def map_remove(obj, key):
 def map_to_str(obj):
     s = '{'
     for key in obj.map:
-        s += type_to_pystr(key) + ':' + type_to_pystr(obj.map[key]) + ','
-    return StrObj(s[:-1] + '}')
+        s += type_to_pystr(key) + ': ' + type_to_pystr(obj.map[key]) + ', '
+    return StrObj(s[:-2] + '}')
 
 
 def map_bind_methods():
@@ -774,7 +774,7 @@ def map_bind_methods():
 
 
 def module_to_str(obj):
-    return StrObj('<module>' + obj.name)
+    return StrObj('<Module ' + obj.name + '>')
 
 
 def module_bind_methods():
@@ -782,7 +782,7 @@ def module_bind_methods():
 
 
 def fun_to_str(obj):
-    return StrObj('<fun>' + obj.name)
+    return StrObj('<Function ' + obj.name + '>')
 
 
 def fun_bind_methods():
