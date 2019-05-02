@@ -3,7 +3,252 @@
 
 
 import sys
-from color_print import *
+from color_print import fatal_print
+
+
+VT_NIL = 1
+VT_INT = 2
+VT_FLOAT = 3
+VT_STR = 4
+VT_LIST = 5
+VT_MAP = 6
+VT_MODULE = 7
+VT_FUN = 8
+VT_TRUE = 9
+VT_FALSE = 10
+VT_BOOL = 11
+
+
+class Value(object):
+
+
+    def __init__(self, obj_header, VT):
+        self.obj_header = obj_header
+        self.value_type = VT
+    
+    def obj(self):
+        return self.obj_header.obj
+
+
+class Frame(object):
+
+
+    def __init__(self, thread, start):
+        self.thread = thread
+        self.start = start
+        # 含头含尾
+        self.end = self.start
+
+    def extend(self, steps=1):
+        self.end += steps
+        if self.thread.size - 1 - self.end <= 512:
+            self.thread.values.extend([Value(NilObj(), VT_NIL) for _ in range(self.thread.size)])
+            self.thread.size *= 2
+
+    def __str__(self):
+        return str((self.start, self.end))
+
+
+class Thread(object):
+
+
+    def __init__(self, size=1024):
+        self.values = [Value(NilObj(), VT_NIL) for _ in range(size)]
+        self.frames = []
+        self.frame_num = 0
+        self.start = 0
+        self.size = size
+    
+    def alloc_frame(self):
+        # 第一个frame
+        if not self.frames:
+            frame = Frame(self, self.start)
+            self.frames.append(frame)
+            self.frame_num += 1
+            return frame
+        else:
+            cur_frame = self.frames[self.frame_num - 1]
+            next_idx = cur_frame.end + 1
+            if self.size - 1 - next_idx <= 512:
+                self.values.extend([Value(NilObj(), VT_NIL) for _ in range(self.size)])
+                self.size *= 2
+            frame = Frame(self, next_idx)
+            self.frames.append(frame)
+            self.frame_num += 1
+            return frame
+
+    def recycle_frame(self):
+        """回收当前的frame
+        """
+        del self.frames[self.frame_num - 1]
+        self.frame_num -= 1
+        # 如果还有上一个frame就返回上一个frame
+        if self.frame_num >= 1:
+            return self.frames[self.frame_num - 1]
+        # 没有就返回None
+        return None
+
+
+
+class NilObj(object):
+
+
+    def __init__(self):
+        self.obj_header = ObjHeader('nil', nil_cls, self)
+        self.nil = None
+    
+    def __hash__(self):
+        return hash(self.nil)
+
+    def __eq__(self, other):
+        return hash(self.nil) == hash(other.nil)
+
+
+class BoolObj(object):
+
+
+    def __init__(self, boolean):
+        self.obj_header = ObjHeader('bool', bool_cls, self)
+        self.bool = boolean
+    
+    def __hash__(self):
+        return hash(self.bool)
+
+    def __eq__(self, other):
+        return hash(self.bool) == hash(other.bool)
+
+
+class StrObj(object):
+    
+
+    def __init__(self, string):
+        self.obj_header = ObjHeader('str', str_cls, self) 
+        self.str = str(string)
+    
+    def __hash__(self):
+        return hash(self.str)
+
+    def __eq__(self, other):
+        return hash(self.str) == hash(other.str)
+
+
+class IntObj(object):
+
+
+    def __init__(self, integer):
+        self.obj_header = ObjHeader('int', int_cls, self)
+        self.int = int(integer)
+    
+    def __hash__(self):
+        return hash(self.int)
+
+    def __eq__(self, other):
+        return hash(self.int) == hash(other.int)
+
+
+class FloatObj(object):
+
+
+    def __init__(self, float_):
+        self.obj_header = ObjHeader('float', float_cls, self)
+        self.float = float(float_)
+    
+    def __hash__(self):
+        return hash(self.float)
+
+    def __eq__(self, other):
+        return hash(self.float) == hash(other.float)
+
+
+class ListObj(object):
+
+
+    def __init__(self, list_):
+        self.obj_header = ObjHeader('list', list_cls, self)
+        self.list = list(list_)
+
+
+class MapObj(object):
+
+
+    def __init__(self, map_):
+        self.obj_header = ObjHeader('map', map_cls, self)
+        self.map = dict(map_)
+
+
+# Var不是一个对象, 只是一个在运行时栈中的辅助对象
+class Var(object):
+    
+
+    def __init__(self, name, scope=0):
+        """
+        scope为0是模块作用域, 值越大, 作用域越小
+        """
+        self.name = name
+        self.scope = scope
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
+class ModuleObj(object):
+
+
+    def __init__(self, name):
+        self.obj_header = ObjHeader('module', module_cls, self)
+        # 模块名, print时用到
+        self.name = name
+        # 存放运行时指令
+        self.stream = []
+        self.cur_idx = 0
+        
+        # var是另外一个结构不是对象
+        # global_vars就是一张表
+        self.global_vars = [] 
+        self.global_var_num = 0
+         
+    def add_var(self, var):
+        for i in range(len(self.global_vars)):
+            if var == self.global_vars[i]:
+                return i
+        self.global_vars.append(var)
+        self.global_var_num += 1
+        return self.global_var_num - 1
+
+    def clear_vars(self):
+        self.global_vars = []
+        self.global_var_num = 0
+
+
+class FunObj(object):
+
+
+    def __init__(self, name, scope=1, arg_num=0):
+        self.obj_header = ObjHeader('fun', fun_cls, self)
+        # 函数名, print用到
+        self.name = name
+        # 存放运行时指令
+        self.stream = []
+        self.cur_idx = 0
+        
+        self.scope = scope
+        self.arg_num = arg_num
+        # var是另外一个结构, 不是对象
+        # local_vars就是一张表
+        self.local_vars = []
+        self.local_var_num = 0
+
+    def add_var(self, var):
+        for i in range(len(self.global_vars)):
+            if var == self.global_vars[i]:
+                return o
+        self.local_vars.append(var)
+        self.local_var_num += 1
+        return self.local_var_num - 1
+    
+    def clear_vars(self):
+        self.local_vars = []
+        self.local_var_num = 0
 
 
 def call(obj, method_name):
@@ -71,6 +316,7 @@ class VM(object):
         self.float_cls = float_cls
         self.list_cls = list_cls
         self.map_cls = map_cls
+        self.module_cls = module_cls
 
 
 module_cls = ClsObj('module_cls')
@@ -543,250 +789,6 @@ def fun_bind_methods():
     fun_cls.methods['tostr(_)'] = fun_to_str
 
 
-class NilObj(object):
-
-
-    def __init__(self):
-        self.obj_header = ObjHeader('nil', nil_cls, self)
-        self.nil = None
-    
-    def __hash__(self):
-        return hash(self.nil)
-
-    def __eq__(self, other):
-        return hash(self.nil) == hash(other.nil)
-
-
-class BoolObj(object):
-
-
-    def __init__(self, boolean):
-        self.obj_header = ObjHeader('bool', bool_cls, self)
-        self.bool = boolean
-    
-    def __hash__(self):
-        return hash(self.bool)
-
-    def __eq__(self, other):
-        return hash(self.bool) == hash(other.bool)
-
-
-class StrObj(object):
-    
-
-    def __init__(self, string):
-        self.obj_header = ObjHeader('str', str_cls, self) 
-        self.str = str(string)
-    
-    def __hash__(self):
-        return hash(self.str)
-
-    def __eq__(self, other):
-        return hash(self.str) == hash(other.str)
-
-
-class IntObj(object):
-
-
-    def __init__(self, integer):
-        self.obj_header = ObjHeader('int', int_cls, self)
-        self.int = int(integer)
-    
-    def __hash__(self):
-        return hash(self.int)
-
-    def __eq__(self, other):
-        return hash(self.int) == hash(other.int)
-
-
-class FloatObj(object):
-
-
-    def __init__(self, float_):
-        self.obj_header = ObjHeader('float', float_cls, self)
-        self.float = float(float_)
-    
-    def __hash__(self):
-        return hash(self.float)
-
-    def __eq__(self, other):
-        return hash(self.float) == hash(other.float)
-
-
-class ListObj(object):
-
-
-    def __init__(self, list_):
-        self.obj_header = ObjHeader('list', list_cls, self)
-        self.list = list(list_)
-
-
-class MapObj(object):
-
-
-    def __init__(self, map_):
-        self.obj_header = ObjHeader('map', map_cls, self)
-        self.map = dict(map_)
-
-
-# Var不是一个对象, 只是一个在运行时栈中的辅助对象
-class Var(object):
-    
-
-    def __init__(self, name, scope=0):
-        """
-        scope为0是模块作用域, 值越大, 作用域越小
-        """
-        self.name = name
-        self.scope = scope
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-
-class ModuleObj(object):
-
-
-    def __init__(self, name):
-        self.obj_header = ObjHeader('module', module_cls, self)
-        # 模块名, print时用到
-        self.name = name
-        # 存放运行时指令
-        self.stream = []
-        self.cur_idx = 0
-        
-        # var是另外一个结构不是对象
-        # global_vars就是一张表
-        self.global_vars = [] 
-        self.global_var_num = 0
-         
-    def add_var(self, var):
-        for i in range(len(self.global_vars)):
-            if var == self.global_vars[i]:
-                return i
-        self.global_vars.append(var)
-        self.global_var_num += 1
-        return self.global_var_num - 1
-
-    def clear_vars(self):
-        self.global_vars = []
-        self.global_var_num = 0
-
-
-class FunObj(object):
-
-
-    def __init__(self, name, scope=1, arg_num=0):
-        self.obj_header = ObjHeader('fun', fun_cls, self)
-        # 函数名, print用到
-        self.name = name
-        # 存放运行时指令
-        self.stream = []
-        self.cur_idx = 0
-        
-        self.scope = scope
-        self.arg_num = arg_num
-        # var是另外一个结构, 不是对象
-        # local_vars就是一张表
-        self.local_vars = []
-        self.local_var_num = 0
-
-    def add_var(self, var):
-        for i in range(len(self.global_vars)):
-            if var == self.global_vars[i]:
-                return o
-        self.local_vars.append(var)
-        self.local_var_num += 1
-        return self.local_var_num - 1
-    
-    def clear_vars(self):
-        self.local_vars = []
-        self.local_var_num = 0
-
-
-VAL_TYPE_NIL = 1
-VAL_TYPE_INT = 2
-VAL_TYPE_FLOAT = 3
-VAL_TYPE_STR = 4
-VAL_TYPE_LIST = 5
-VAL_TYPE_MAP = 6
-VAL_TYPE_MODULE = 7
-VAL_TYPE_FUN = 8
-VAL_TYPE_TRUE = 9
-VAL_TYPE_FALSE = 10
-VAL_TYPE_BOOL = 11
-
-
-class Value(object):
-
-
-    def __init__(self, obj_header, VAL_TYPE):
-        self.obj_header = obj_header
-        self.value_type = VAL_TYPE
-    
-    def obj(self):
-        return self.obj_header.obj
-
-
-class Frame(object):
-
-
-    def __init__(self, thread, start):
-        self.thread = thread
-        self.start = start
-        # 含头含尾
-        self.end = self.start
-
-    def extend(self, steps=1):
-        self.end += steps
-        if self.thread.size - 1 - self.end <= 512:
-            self.thread.values.extend([Value(NilObj(), VAL_TYPE_NIL) for _ in range(self.thread.size)])
-            self.thread.size *= 2
-
-    def __str__(self):
-        return str((self.start, self.end))
-
-
-class Thread(object):
-
-
-    def __init__(self, size=1024):
-        self.values = [Value(NilObj(), VAL_TYPE_NIL) for _ in range(size)]
-        self.frames = []
-        self.frame_num = 0
-        self.start = 0
-        self.size = size
-    
-    def alloc_frame(self):
-        # 第一个frame
-        if not self.frames:
-            frame = Frame(self, self.start)
-            self.frames.append(frame)
-            self.frame_num += 1
-            return frame
-        else:
-            cur_frame = self.frames[self.frame_num - 1]
-            next_idx = cur_frame.end + 1
-            if self.size - 1 - next_idx <= 512:
-                self.values.extend([Value(NilObj(), VAL_TYPE_NIL) for _ in range(self.size)])
-                self.size *= 2
-            frame = Frame(self, next_idx)
-            self.frames.append(frame)
-            self.frame_num += 1
-            return frame
-
-    def recycle_frame(self):
-        """回收当前的frame
-        """
-        del self.frames[self.frame_num - 1]
-        self.frame_num -= 1
-        # 如果还有上一个frame就返回上一个frame
-        if self.frame_num >= 1:
-            return self.frames[self.frame_num - 1]
-        # 没有就返回None
-        return None
-    
-
 def _bind_methods():
     module_bind_methods()
     fun_bind_methods()
@@ -802,12 +804,4 @@ def _bind_methods():
 _bind_methods()
 
 vm = VM()
-
-
-def main(argv=None):
-    pass
-
-
-if __name__ == '__main__':
-    main()
 

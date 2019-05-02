@@ -3,7 +3,7 @@
 
 
 import sys
-from color_print import *
+from color_print import fatal_print
 from tokentype import *
 
 
