@@ -13,7 +13,7 @@ VT_FUN = 8
 VT_TRUE = 9
 VT_FALSE = 10
 VT_BOOL = 11
-
+VT_ERR = 12
 
 
 OT_NIL = 1
