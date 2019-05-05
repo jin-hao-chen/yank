@@ -1,4 +1,4 @@
-INTERPRETOR = ipython3
+INTERPRETOR = python3
 TARGET = yank
 
 r: $(TARGET)

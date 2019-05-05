@@ -9,8 +9,6 @@ from ytypes import *
 from color_print import fatal_print
 
 
-
-
 class NilObj(object):
 
 
@@ -253,18 +251,22 @@ def nil_equ(start, args):
         return BoolObj(False)
     return BoolObj(True)
 
+def nil_hash(start, args):
+    fatal_print('Runtime error, nil cannot be hashed!')
+    sys.exit(1)
 
 def nil_bind_methods():
     nil_cls.methods['tostr(_)'] = nil_to_str
     nil_cls.methods['==(_,_)'] = nil_equ
+    nil_cls.methods['hash(_)'] = nil_hash
 
     nil_cls.methods['_tostr(_)'] = _nil_to_str
     nil_cls.methods['_==(_,_)'] = _nil_equ
+    nil_cls.methods['_hash(_)'] = _nil_hash
 
 def bool_to_str(start, args):
     obj = args[start].obj()
     return StrObj(str(obj.bool))
-
 
 def bool_equ(start, args):
     obj1 = args[start].obj()
@@ -306,16 +308,27 @@ def str_add(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type != OT_STR:
-        fatal_print('Run error, arg2 must be string')
+        fatal_print('Runtime error, arg2 must be string')
         sys.exit(1)
     return StrObj(obj1.str + obj2.str)
 
+def str_numbers(start, args):
+    obj = args[start].obj()
+    if obj.str.isdigit():
+        ret = IntObj(int(obj.str))
+    else:
+        try:
+            ret = FloatObj(float(obj.str))
+        except:
+            fatal_print('Runtime error, cannot convert %s to numbers' % obj.str)
+            sys.exit(1)
+    return ret
 
 def str_at(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type != OT_STR:
-        fatal_print('Run error, index must be int')
+        fatal_print('Runtime error, index must be int')
         sys.exit(1)
     return StrObj(obj1.str[obj2.int])
 
@@ -329,6 +342,16 @@ def str_emtpy(start, args):
     obj = args[start].obj()
     return BoolObj(len(obj.str) == 0)
 
+def _str_numbers(obj):
+    if obj.str.isdigit():
+        ret = IntObj(int(obj.str))
+    else:
+        try:
+            ret = FloatObj(float(obj.str))
+        except:
+            fatal_print('Runtime error, cannot convert %s to numbers' % obj.str)
+            sys.exit(1)
+    return ret
 
 def str_bind_methods():
     str_cls.methods['tostr(_)'] = str_to_str
@@ -338,6 +361,7 @@ def str_bind_methods():
     str_cls.methods['at(_,_)'] = str_at
     str_cls.methods['len(_)'] = str_len
     str_cls.methods['empty(_)'] = str_emtpy
+    str_cls.methods['numbers(_)'] = str_numbers
 
     str_cls.methods['_tostr(_)'] = _str_to_str
     str_cls.methods['_==(_,_)'] = _str_equ
@@ -346,6 +370,7 @@ def str_bind_methods():
     str_cls.methods['_at(_,_)'] = _str_at
     str_cls.methods['_len(_)'] = _str_len
     str_cls.methods['_empty(_)'] = _str_emtpy
+    str_cls.methods['_numbers(_)'] = _str_numbers
 
 def int_to_str(start, args):
     obj = args[start].obj()
@@ -372,10 +397,10 @@ def int_add(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
@@ -392,7 +417,7 @@ def int_sub(start, args):
         obj1 = int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
@@ -406,10 +431,10 @@ def int_mul(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
@@ -423,21 +448,21 @@ def int_div(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
         if obj2.float == 0.0:
-            fatal_print('Run error, arg2 cannot be 0')
+            fatal_print('Runtime error, arg2 cannot be 0')
             sys.exit(1)
         return FloatObj(obj1.float / obj2.float)
 
     if obj1.obj_header.obj_type == OT_INT:
         if obj2.int == 0:
-            fatal_print('Run error, arg2 cannot be 0')
+            fatal_print('Runtime error, arg2 cannot be 0')
             sys.exit(1)
         return IntObj(obj1.int / obj2.int)
 
@@ -446,11 +471,11 @@ def int_mod(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, arg2 must be int')
+        fatal_print('Runtime error, arg2 must be int')
         sys.exit(1)
     
     if obj2.int == 0:
-        fatal_print('Run error, arg2 cannot be 0')
+        fatal_print('Runtime error, arg2 cannot be 0')
         sys.exit(1)
     return IntObj(obj1.int % obj2.int)
 
@@ -459,11 +484,11 @@ def int_gt(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float > obj2.float)
 
 
@@ -471,12 +496,12 @@ def int_ge(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, args is not a number')
+        fatal_print('Runtime error, args is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float >= obj2.float)
 
 
@@ -484,12 +509,12 @@ def int_lt(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, args is not a number')
+        fatal_print('Runtime error, args is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
 
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float < obj2.float)
 
 
@@ -497,11 +522,11 @@ def int_le(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, obj2 is not a number')
+        fatal_print('Runtime error, obj2 is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float <= obj2.float)
 
 
@@ -509,7 +534,7 @@ def int_bind_methods():
     int_cls.methods['tostr(_)'] = int_to_str
     int_cls.methods['==(_,_)'] = int_equ
     int_cls.methods['hash(_)'] = int_hash
-    int_cls.methods['tofloat(_)'] = int_to_float
+    int_cls.methods['float(_)'] = int_to_float
     int_cls.methods['+(_,_)'] = int_add
     int_cls.methods['-(_,_)'] = int_sub
     int_cls.methods['*(_,_)'] = int_mul
@@ -523,7 +548,7 @@ def int_bind_methods():
     int_cls.methods['_tostr(_)'] = _int_to_str
     int_cls.methods['_==(_,_)'] = _int_equ
     int_cls.methods['_hash(_)'] = _int_hash
-    int_cls.methods['_tofloat(_)'] = _int_to_float
+    int_cls.methods['_float(_)'] = _int_to_float
     int_cls.methods['_+(_,_)'] = _int_add
     int_cls.methods['_-(_,_)'] = _int_sub
     int_cls.methods['_*(_,_)'] = _int_mul
@@ -559,10 +584,10 @@ def float_add(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     return FloatObj(obj1.float + obj2.float)
@@ -572,10 +597,10 @@ def float_sub(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float - obj2.float)
 
@@ -584,10 +609,10 @@ def float_mul(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_INT, OT_FLOAT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float * obj2.float)
 
@@ -596,13 +621,13 @@ def float_div(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.float == 0:
-        fatal_print('Run error, arg2 cannot be 0')
+        fatal_print('Runtime error, arg2 cannot be 0')
     return FloatObj(obj1.float / obj2.float)
 
 
@@ -610,10 +635,10 @@ def float_gt(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float > obj2.float)
 
 
@@ -621,10 +646,10 @@ def float_ge(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float >= obj2.float)
 
 
@@ -632,10 +657,10 @@ def float_lt(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float < obj2.float)
 
 
@@ -643,10 +668,10 @@ def float_le(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float <= obj2.float)
 
 
@@ -654,7 +679,7 @@ def float_bind_methods():
     float_cls.methods['tostr(_)'] = float_to_str
     float_cls.methods['==(_,_)'] = float_equ
     float_cls.methods['hash(_)'] = float_hash
-    float_cls.methods['toint(_)'] = float_to_int
+    float_cls.methods['int(_)'] = float_to_int
     float_cls.methods['+(_,_)'] = float_add
     float_cls.methods['-(_,_)'] = float_sub
     float_cls.methods['*(_,_)'] = float_mul
@@ -667,7 +692,7 @@ def float_bind_methods():
     float_cls.methods['_tostr(_)'] = _float_to_str
     float_cls.methods['_==(_,_)'] = _float_equ
     float_cls.methods['_hash(_)'] = _float_hash
-    float_cls.methods['_toint(_)'] = _float_to_int
+    float_cls.methods['_int(_)'] = _float_to_int
     float_cls.methods['_+(_,_)'] = _float_add
     float_cls.methods['_-(_,_)'] = _float_sub
     float_cls.methods['_*(_,_)'] = _float_mul
@@ -696,7 +721,7 @@ def list_at(start, args):
     obj1 = args[start].obj()
     obj2 = args[start + 1].obj()
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, arg2 must be int')
+        fatal_print('Runtime error, arg2 must be int')
         sys.exit(1)
     return copy.copy(obj1.list[obj2.int])
 
@@ -707,7 +732,7 @@ def list_insert(start, args):
     obj3 = args[start + 2].obj()
     # obj2为下标
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, index must be int')
+        fatal_print('Runtime error, index must be int')
         sys.exit(1)
     obj1.list.insert(obj2.int, copy.copy(args[start + 2]))
     
@@ -723,11 +748,11 @@ def list_remove(start, args):
     obj2 = args[start + 1].obj()
     # obj2为下标
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, index must be int')
+        fatal_print('Runtime error, index must be int')
         sys.exit(1)
     length = list_len(obj1) 
     if obj2.int >= length or obj2.int < 0:
-        fatal_print('Run error, index out of rang')
+        fatal_print('Runtime error, index out of rang')
         sys.exit(1)
     del obj1.list[obj2.int]
 
@@ -752,7 +777,7 @@ def map_put(start, args):
     key = args[start + 1].obj()
     val = args[start + 2].obj()
     if key.obj_header.obj_type in [OT_MAP, OT_LIST]:
-        fatal_print('Run error, map or list cannot be hashed')
+        fatal_print('Runtime error, map or list cannot be hashed')
         sys.exit(1)
     obj.map[copy.copy(args[start + 1])] = copy.copy(args[start + 2])
 
@@ -761,10 +786,10 @@ def map_get(start, args):
     obj = args[start].obj()
     key = args[start + 1].obj()
     if key.obj_header.obj_type == OT_NIL:
-        fatal_print('Run error, key cannot be nil')
+        fatal_print('Runtime error, key cannot be nil')
         sys.exit(1)
     if key.obj_header.obj_type in [OT_MAP, OT_LIST]:
-        fatal_print('Run error, map or list cannot be hashed')
+        fatal_print('Runtime error, map or list cannot be hashed')
         sys.exit(1)
     if args[start + 1] not in obj.map:
         return Value.new_value(NilObj())
@@ -775,10 +800,10 @@ def map_remove(start, args):
     obj = args[start].obj()
     key = args[start + 1].obj()
     if key.obj_header.obj_type == OT_NIL:
-        fatal_print('Run error, key cannot be nil')
+        fatal_print('Runtime error, key cannot be nil')
         sys.exit(1)
     if key.obj_header.obj_type in [OT_MAP, OT_LIST]:
-        fatal_print('Run error, map or list cannot be hashed')
+        fatal_print('Runtime error, map or list cannot be hashed')
         sys.exit(1)
     if args[start + 1] in obj.map:
         del obj.map[args[start + 1]]
@@ -842,6 +867,9 @@ def _nil_equ(obj1, obj2):
         return BoolObj(False)
     return BoolObj(True)
 
+def _nil_hash(obj):
+    fatal_print('RuntimetimeError, nil cannot be hashed!')
+    sys.exit(1)
 
 def _bool_to_str(obj):
     return StrObj(str(obj.bool))
@@ -869,14 +897,14 @@ def _str_hash(obj):
 
 def _str_add(obj1, obj2):
     if obj2.obj_header.obj_type != OT_STR:
-        fatal_print('Run error, arg2 must be string')
+        fatal_print('Runtime error, arg2 must be string')
         sys.exit(1)
     return StrObj(obj1.str + obj2.str)
 
 
 def _str_at(obj1, obj2):
     if obj2.obj_header.obj_type != OT_STR:
-        fatal_print('Run error, index must be int')
+        fatal_print('Runtime error, index must be int')
         sys.exit(1)
     return StrObj(obj1.str[obj2.int])
 
@@ -909,10 +937,10 @@ def _int_to_float(obj):
 
 def _int_add(obj1, obj2):
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
@@ -924,10 +952,10 @@ def _int_add(obj1, obj2):
 
 def _int_sub(obj1, obj2):
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
@@ -939,10 +967,10 @@ def _int_sub(obj1, obj2):
 
 def _int_mul(obj1, obj2):
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
@@ -954,75 +982,75 @@ def _int_mul(obj1, obj2):
 
 def _int_div(obj1, obj2):
     if obj2.obj_header.obj_type == OT_FLOAT:
-        obj1 = int_to_float(obj1)
+        obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     if obj1.obj_header.obj_type == OT_FLOAT:
         if obj2.float == 0.0:
-            fatal_print('Run error, arg2 cannot be 0')
+            fatal_print('Runtime error, arg2 cannot be 0')
             sys.exit(1)
         return FloatObj(obj1.float / obj2.float)
 
     if obj1.obj_header.obj_type == OT_INT:
         if obj2.int == 0:
-            fatal_print('Run error, arg2 cannot be 0')
+            fatal_print('Runtime error, arg2 cannot be 0')
             sys.exit(1)
         return IntObj(obj1.int / obj2.int)
 
 
 def _int_mod(obj1, obj2):
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, arg2 must be int')
+        fatal_print('Runtime error, arg2 must be int')
         sys.exit(1)
     
     if obj2.int == 0:
-        fatal_print('Run error, arg2 cannot be 0')
+        fatal_print('Runtime error, arg2 cannot be 0')
         sys.exit(1)
     return IntObj(obj1.int % obj2.int)
 
 
 def _int_gt(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float > obj2.float)
 
 
 def _int_ge(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, args is not a number')
+        fatal_print('Runtime error, args is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
     
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float >= obj2.float)
 
 
 def _int_lt(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, args is not a number')
+        fatal_print('Runtime error, args is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
 
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float < obj2.float)
 
 
 def _int_le(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, obj2 is not a number')
+        fatal_print('Runtime error, obj2 is not a number')
         sys.exit(1)
-    obj1 = int_to_float(obj1)
+    obj1 = _int_to_float(obj1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     return BoolObj(obj1.float <= obj2.float)
 
 
@@ -1044,10 +1072,10 @@ def _float_to_int(obj):
 
 def _float_add(obj1, obj2):
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     
     return FloatObj(obj1.float + obj2.float)
@@ -1055,69 +1083,69 @@ def _float_add(obj1, obj2):
 
 def _float_sub(obj1, obj2):
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float - obj2.float)
 
 
 def _float_mul(obj1, obj2):
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_INT, OT_FLOAT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     return FloatObj(obj1.float * obj2.float)
 
 
 def _float_div(obj1, obj2):
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2)
+        obj2 = _int_to_float(obj2)
     
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.float == 0:
-        fatal_print('Run error, arg2 cannot be 0')
+        fatal_print('Runtime error, arg2 cannot be 0')
     return FloatObj(obj1.float / obj2.float)
 
 
 def _float_gt(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float > obj2.float)
 
 
 def _float_ge(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float >= obj2.float)
 
 
 def _float_lt(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float < obj2.float)
 
 
 def _float_le(obj1, obj2):
     if obj2.obj_header.obj_type not in [OT_FLOAT, OT_INT]:
-        fatal_print('Run error, arg2 is not a number')
+        fatal_print('Runtime error, arg2 is not a number')
         sys.exit(1)
     if obj2.obj_header.obj_type == OT_INT:
-        obj2 = int_to_float(obj2) 
+        obj2 = _int_to_float(obj2) 
     return BoolObj(obj1.float <= obj2.float)
 
 
@@ -1135,7 +1163,7 @@ def _list_to_str(obj):
 
 def _list_at(obj1, obj2):
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, arg2 must be int')
+        fatal_print('Runtime error, arg2 must be int')
         sys.exit(1)
     return obj1.list[obj2.int]
 
@@ -1143,7 +1171,7 @@ def _list_at(obj1, obj2):
 def _list_insert(obj1, obj2, obj3):
     # obj2为下标
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, index must be int')
+        fatal_print('Runtime error, index must be int')
         sys.exit(1)
     obj1.list.insert(obj2.int, copy.copy(obj3))
     
@@ -1155,28 +1183,28 @@ def _list_append(obj1, obj2):
 def _list_remove(obj1, obj2):
     # obj2为下标
     if obj2.obj_header.obj_type != OT_INT:
-        fatal_print('Run error, index must be int')
+        fatal_print('Runtime error, index must be int')
         sys.exit(1)
     length = list_len(obj1) 
     if obj2.int >= length or obj2.int < 0:
-        fatal_print('Run error, index out of rang')
+        fatal_print('Runtime error, index out of rang')
         sys.exit(1)
     del obj1.list[obj2.int]
 
 
 def _map_put(obj1, key, val):
     if key.obj().obj_header.obj_type in [OT_MAP, OT_LIST]:
-        fatal_print('Run error, map or list cannot be hashed')
+        fatal_print('Runtime error, map or list cannot be hashed')
         sys.exit(1)
     obj.map[copy.copy(key)] = copy.copy(val)
 
 
 def _map_get(obj, key):
     if key.obj().obj_header.obj_type == OT_NIL:
-        fatal_print('Run error, key cannot be nil')
+        fatal_print('Runtime error, key cannot be nil')
         sys.exit(1)
     if key.obj().obj_header.obj_type in [OT_MAP, OT_LIST]:
-        fatal_print('Run error, map or list cannot be hashed')
+        fatal_print('Runtime error, map or list cannot be hashed')
         sys.exit(1)
     if key not in obj.map:
         return Value.to_value(NilObj())
@@ -1185,10 +1213,10 @@ def _map_get(obj, key):
 
 def _map_remove(obj, key):
     if key.obj().obj_header.obj_type == OT_NIL:
-        fatal_print('Run error, key cannot be nil')
+        fatal_print('Runtime error, key cannot be nil')
         sys.exit(1)
     if key.obj().obj_header.obj_type in [OT_MAP, OT_LIST]:
-        fatal_print('Run error, map or list cannot be hashed')
+        fatal_print('Runtime error, map or list cannot be hashed')
         sys.exit(1)
     if key in obj.map:
         del obj.map[key]
