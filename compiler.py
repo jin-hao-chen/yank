@@ -11,8 +11,25 @@ BP_LOWEST = 0
 BP_HIGHEST = 100
 
 
-MT_NATIVE = 1
-MT_SCRIPT = 2
+MT_METHOD = 1
+MT_SETTER = 2
+MT_GETTER = 3
+MT_SUB_SETTER = 4
+MT_SUB_GETTER = 5
+
+
+SCOPE_INVALID = 1
+SCOPE_MODULE = 2
+SCOPE_LOCAL = 3
+
+
+class Var(object):
+
+
+    def __init__(self, name, scope, idx=0):
+        self.name = name
+        self.scope = scope
+        self.idx = idx
 
 
 class MethodSign(object):
@@ -20,6 +37,7 @@ class MethodSign(object):
 
     def __init__(self, mt_type, string):
         self.type = mt_type
+        # part not full
         self.str = string
 
 
@@ -32,7 +50,7 @@ class Symbol(object):
         self.led = None
         self.nud = None
         # 方法签名
-        self.method_sign = None
+        self.method_sign_fn = None
         self.lbp = 0
 
 
@@ -49,10 +67,11 @@ class CompileUnit(object):
         # parser获取token
         self.parser = parser
         # module与fun只能有一个有效, 存放编译的指令
-        self.module = module
         self.fun = fun
         # 默认为模块编译单元
         self.scope = scope
+        self.local_vars = []
+        self.local_var_num = 0
         self.outter_cu = None
         self.cur_loop = None
     
@@ -64,13 +83,16 @@ class CompileUnit(object):
             print(self.parser.cur_token)
         pass
 
-    def compile_statements(self):
+    def compile_statement(self):
         pass
 
     def compile_if_statement(self):
         pass
 
     def compile_while_statement(self):
+        pass
+
+    def compile_return_statement(self):
         pass
 
     def define_var(self, var):
@@ -90,7 +112,7 @@ class CompileUnit(object):
         warning_print('module and fun are both None')
         sys.exit(1) 
     
-    def drop_var(self, var):
+    def discard_var(self, var):
         if self.module:
             module_idx = self.module.find_var(var)
             # 第一次定义var
