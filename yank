@@ -6,7 +6,7 @@ import os
 import sys
 from tokentype import *
 from parser import (Token, Parser)
-from objects import (call, call_by_value, type_to_pystr, is_type, args_num, vm)
+from objects import (call, call_by_value, exit_if_false, type_to_pystr, is_type, args_num, vm)
 from objects import (ObjHeader, ClsObj, NilObj, BoolObj, StrObj, IntObj, \
         FloatObj, ListObj, MapObj, ModuleObj, FunObj, Value)
 from objects import (Thread, Frame)
@@ -39,9 +39,9 @@ def test_object_api():
     scores = ListObj()
     for i in range(3):
         frame[0].to_value(scores)
-        frame[1].to_value(IntObj(0))
+        frame[1].to_value(FloatObj(0))
         frame[2].to_value(FloatObj(90.0 + i))
-        call_by_value(frame[0], 'insert(_,_,_)')(frame.start, frame)
+        exit_if_false(call_by_value(frame[0], 'insert(_,_,_)')(frame.start, frame))
     frame[0].to_value(person)
     frame[1].to_value(StrObj('Scores'))
     frame[2].to_value(scores)

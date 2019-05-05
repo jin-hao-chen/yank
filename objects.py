@@ -104,7 +104,6 @@ class ModuleObj(object):
 
     def __init__(self, name):
         self.obj_header = ObjHeader(OT_MODULE, module_cls, self)
-        # 模块名, print时用到
         self.name = name
         self.module_var_names = []
         self.module_var_values = []
@@ -115,22 +114,30 @@ class FunObj(object):
 
     def __init__(self, name, scope=1, arg_num=0):
         self.obj_header = ObjHeader(OT_FUN, fun_cls, self)
-        # 函数名, print用到
         self.name = name
+        self.constants = []
         self.max_used_slots = 0
-        # 存放运行时指令
         self.stream = []
         self.cur_idx = 0
         
         self.scope = scope
         self.arg_num = arg_num
-
+    
+    def add_constant(self, value):
+        self.constants.append(value)
+        return len(self.constants) - 1
+    
 
 def call(obj, method_name):
     return obj.obj_header.cls_obj.methods[method_name]
 
-def call_by_value(val, method_name):
-    return call(val.obj(), method_name)
+def call_by_value(value, method_name):
+    return call(value.obj(), method_name)
+
+def exit_if_false(cond):
+    if not cond:
+        sys.exit(1)
+    return True
 
 def _type_to_pystr(obj):
     if obj.obj_header.obj_type == OT_INT:
@@ -236,12 +243,9 @@ def return_false():
 
 # 参数被封装成了yank_list
 def fun_call(obj, args):
-    # obj为fun object
-    # 执行的是指令流
     pass
 
 
-# args是Value类型
 def nil_to_str(start, args):
     obj = args[start].obj()
     return return_true(start, args, StrObj(str(obj.nil)))
