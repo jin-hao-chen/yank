@@ -115,9 +115,13 @@ class FunObj(object):
     def __init__(self, name, scope=1, arg_num=0):
         self.obj_header = ObjHeader(OT_FUN, fun_cls, self)
         self.name = name
-        self.constants = []
-        self.max_used_slots = 0
         self.stream = []
+        self.stream_num = 0
+        
+        # 存放的是Python级别的字符串, 包括数字和字符串的字面量
+        self.constants = []
+        self.constant_num = 0
+        self.max_used_slots = 0
         self.cur_idx = 0
         
         self.scope = scope
@@ -125,7 +129,8 @@ class FunObj(object):
     
     def add_constant(self, value):
         self.constants.append(value)
-        return len(self.constants) - 1
+        self.constant_num += 1
+        return self.constant_num - 1
     
 
 def call(obj, method_name):
@@ -830,20 +835,24 @@ def map_bind_methods():
 
 def module_to_str(start, args):
     obj = args[start].obj()
-    return return_true(start, args, StrObj('<Module ' + obj.name + '>'))
+    addr = str(id(obj))
+    return return_true(start, args, StrObj('<Module(addr: %s) %s>' % (addr, obj.name)))
 
 
 def module_bind_methods():
     module_cls.methods['tostr(_)'] = module_to_str
+    module_cls.methods['_tostr(_)'] = _module_to_str
 
 
 def fun_to_str(start, args):
     obj = args[start].obj()
-    return return_true(start, args, StrObj('<Function ' + obj.name + '>'))
+    addr = str(id(obj))
+    return return_true(start, args, StrObj('<Function(addr: %s) %s>' % (addr, obj.name)))
 
 
 def fun_bind_methods():
     fun_cls.methods['tostr(_)'] = fun_to_str
+    fun_cls.methods['_tostr(_)'] = _fun_to_str
 
 
 def _bind_methods():
@@ -1230,11 +1239,13 @@ def _map_to_str(obj):
 
 
 def _module_to_str(obj):
-    return StrObj('<Module ' + obj.name + '>')
+    addr = str(id(obj))
+    return StrObj('<Module(addr: %s) %s>' % (addr, obj.name))
 
 
 def _fun_to_str(obj):
-    return StrObj('<Function ' + obj.name + '>')
+    addr = str(id(obj))
+    return StrObj('<Function(addr: %s) %s>' % (addr, obj.name))
 
 class Value(object):
 

@@ -8,7 +8,7 @@ LOAD_LOCAL = 2
 STORE_LOCAL = 3
 LOAD_GLOBAL = 4
 STORE_GLOBAL = 5
-RETURN_VALUE = 6
+RETURN_VALUE = 6 # 回收frame并返回返回值到老的栈顶
 PUSH_NIL = 7
 POP = 8
 JUMP_IF_FALSE = 9
@@ -46,3 +46,17 @@ OR = 51
 NOT = 52
 END = 100
 
+
+def opcode_print(stream):
+    ptr = 0
+    stream_len = len(stream)
+    while ptr < stream_len:
+        op = stream[ptr]
+        s = ''
+        if op == LOAD_CONST:
+            s += 'LOAD_CONST '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        ptr += 1
+        print(s)

@@ -6,17 +6,31 @@ import sys
 from tokentype import *
 from color_print import warning_print
 import opcode
+from objects import FunObj
 
 
-BP_LOWEST = 0
-BP_HIGHEST = 100
+BP_NONE = 0
+BP_LOWEST = 1
+BP_CONDITION = 2
+BP_LOGIC_OR = 3 # or
+BP_LOGIC_AND = 4 # and
+BP_EQUAL = 5 # ==
+BP_IS = 6 # is
+BP_CMP = 7 # <=, >=, <, >
+BP_BIT_OR = 8 # |
+BP_BIT_AND = 9 # &
+BP_BIT_SHIFT = 10 # >>, <<
+BP_BIT_TERM = 12 # +, -
+BP_BIT_FACTOR = 13 # *, /
+BP_BIT_UNARY = 14 # not, -, ~
+BP_BIT_CALL = 15 # ., (), []
+BP_HIGHEST = 16
 
 
-MT_METHOD = 1
-MT_SETTER = 2
-MT_GETTER = 3
-MT_SUB_SETTER = 4
-MT_SUB_GETTER = 5
+SIGN_METHOD = 1 SIGN_SETTER = 2
+SIGN_GETTER = 3
+SIGN_SUB_SETTER = 4
+SIGN_SUB_GETTER = 5
 
 
 SCOPE_INVALID = 1
@@ -50,27 +64,80 @@ class Symbol(object):
 
     def __init__(self):
         # 当前token的字符串
-        self.id = ''
+        self.id = None
         self.led = None
         self.nud = None
         # 方法签名
-        self.method_sign_fn = None
-        self.lbp = 0
+        self.sign_fn = None
+        self.lbp = BP_NONE
+
+"""
+符号分为两种, 运算符与符号
+运算符(operator): 有id, led, nud, sign_bp, lbp
+符号(symbol): 无id和sign_bp, 有led, nud, lbp
+它们主要的区别是运算符可以重载, 符号不可以重载
+
+prefix_symbol
+prefix_operator
+
+infix_symbol
+infix_operator
+
+mix_operator
+
+"""
+
+# nud和led定义区
+
+# 数字和字符串的nud
+def literal(cu):
+    cu.emit_load_constant()
+
+# 标签函数定义区
 
 
-# 定义各种运算符的led与nud方法, 在绑定上去
-# infix
+def unused_rule():
+    return Symbol()
+
+def prefix_symbol(nud):
+    pass
+
+def prefix_operator(id_, nud, sign_fn):
+    pass
+
+def infix_symbol(led):
+    pass
+
+def infix_operator(id_, led, sign_fn, lbp):
+    pass
+
+def mix_operator(id_, led, nud, sign_fn, lbp):
+    pass
+
+
+# 定义各种运算符的led与nud方法, 再绑定上去
 
 symbol_rules = []
+
+
+def expression(cu, rbp):
+    nud_fun = symbol_rules[cu.cur_parser.cur_token.type].nud
+    cu.cur_parser.fetch_next_token()
+    nud_fun(cu) 
+    while rbp < symbol_rules[cu.cur_parser.cur_token.type].lbp:
+        led_fun = symbol_rules[cu.cur_parser.cur_token.type].led
+        cu.cur_parser.fetch_next_token()
+        led_fun(cu)
 
 
 class CompileUnit(object):
 
 
-    def __init__(self, parser, scope=0, module=None, fun=None):
+    def __init__(self, parser, fun_name='CORE', scope=0):
         self.cur_parser = parser
-        self.fun = fun
+        parser.cur_cu = self
         self.scope = scope
+        self.fun = FunObj(fun_name)
         self.local_vars = []
         self.local_var_num = 0
         self.outter_cu = None
@@ -83,16 +150,26 @@ class CompileUnit(object):
         self.local_vars.append(var)
         self.local_var_num += 1
         return self.local_var_num - 1
-
-    def write_opcode(self, opcode):
-        self.fun.stream.append(opcode)
-
-    def emit_load_constant(self, var, cons):
-        self.write_opcode_operand(opcode.LOAD_CONST, )
-
-    def write_opcode_operand(self, opcode, operand):
-        pass
     
+    # 字符串和数据字面量比较特别, 与其他变量相比, 他们是常量, 要放到常量表中
+    def emit_load_constant(self, value):
+        idx = self.fun.add_constant(value)
+        self.write_opcode_operand(opcode.LOAD_CONST, idx)
+    
+    # 这种一般operand就是写在指令流中
+    def write_opcode_operand(self, op, operand):
+        self.fun.stream.append(op)
+        self.fun.stream.append(operand)
+        self.fun.stream_num += 1
+        # 返回opcode所在的下标
+        return self.fun.stream_num - 2
+    
+    # 这种一般operand在栈中
+    def write_opcode(self, opcode):
+        self.fun.stream.append(op)
+        self.fun.stream_num += 1
+        return self.fun.stream_num - 1
+
     def define_var(self, var):
         pass
     
@@ -100,11 +177,6 @@ class CompileUnit(object):
         pass
 
     def compile(self):
-        while True:
-            self.parser.fetch_next_token()
-            if self.parser.cur_token.type == TOKEN_TYPE_EOF:
-                return
-            print(self.parser.cur_token)
         pass
 
     def compile_statement(self):

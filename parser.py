@@ -44,6 +44,7 @@ class Parser(object):
         self.line_num = 1
         self.pre_token = None
         self.cur_token = Token(-1, self.line_num)
+        self.cur_cu = None
     
 
     def fetch_next_token(self):

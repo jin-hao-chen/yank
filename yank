@@ -11,6 +11,7 @@ from objects import (ObjHeader, ClsObj, NilObj, BoolObj, StrObj, IntObj, \
         FloatObj, ListObj, MapObj, ModuleObj, FunObj, Value)
 from objects import (Thread, Frame)
 from compiler import CompileUnit, Loop
+from opcode import opcode_print
 
 
 def run_file(argv=None):
@@ -39,7 +40,7 @@ def test_object_api():
     scores = ListObj()
     for i in range(3):
         frame[0].to_value(scores)
-        frame[1].to_value(FloatObj(0))
+        frame[1].to_value(IntObj(0))
         frame[2].to_value(FloatObj(90.0 + i))
         exit_if_false(call_by_value(frame[0], 'insert(_,_,_)')(frame.start, frame))
     frame[0].to_value(person)
@@ -50,8 +51,19 @@ def test_object_api():
     call_by_value(frame[0], 'tostr(_)')(frame.start, frame)
     print(frame[0].obj().str) 
 
+    fun = FunObj('test')
+    print(call(fun, '_tostr(_)')(fun).str)
+
+
+def test_compiler():
+    parser = Parser('./example.y')
+    cu = CompileUnit(parser)
+    cu.emit_load_constant('1')
+    opcode_print(cu.fun.stream)
+    
+
 def main(argv=None):
-    test_object_api()
+    test_compiler()
 
 if __name__ == '__main__':
     argv = sys.argv
