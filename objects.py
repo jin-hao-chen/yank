@@ -191,7 +191,7 @@ def is_type(obj, obj_type):
 def args_num(pystr):
     left = pystr.find('(')
     right = pystr.rfind(')')
-    args_str = s[left + 1: right]
+    args_str = pystr[left + 1: right]
     return len(args_str.split(','))
 
 class ObjHeader(object):
@@ -209,21 +209,6 @@ class ClsObj(object):
     def __init__(self, name):
         self.name = name
         self.methods = {}
-
-
-class VM(object):
-
-
-    def __init__(self):
-        self.fun_cls = fun_cls
-        self.nil_cls = nil_cls
-        self.bool_cls = bool_cls
-        self.str_cls = str_cls
-        self.int_cls = int_cls
-        self.float_cls = float_cls
-        self.list_cls = list_cls
-        self.map_cls = map_cls
-        self.module_cls = module_cls
 
 
 module_cls = ClsObj('module_cls')
@@ -268,13 +253,13 @@ def nil_hash(start, args):
     return return_false()
 
 def nil_bind_methods():
-    nil_cls.methods['tostr(_)'] = nil_to_str
-    nil_cls.methods['==(_,_)'] = nil_equ
+    nil_cls.methods['tostr()'] = nil_to_str
+    nil_cls.methods['==(_)'] = nil_equ
     nil_cls.methods['hash(_)'] = nil_hash
 
-    nil_cls.methods['_tostr(_)'] = _nil_to_str
-    nil_cls.methods['_==(_,_)'] = _nil_equ
-    nil_cls.methods['_hash(_)'] = _nil_hash
+    nil_cls.methods['_tostr()'] = _nil_to_str
+    nil_cls.methods['_==(_)'] = _nil_equ
+    nil_cls.methods['_hash()'] = _nil_hash
 
 def bool_to_str(start, args):
     obj = args[start].obj()
@@ -290,13 +275,13 @@ def bool_hash(start, args):
     return return_true(start, args, IntObj(hash(obj.bool)))
 
 def bool_bind_methods():
-    bool_cls.methods['tostr(_)'] = bool_to_str
-    bool_cls.methods['==(_,_)'] = bool_equ
-    bool_cls.methods['hash(_)'] = bool_hash
+    bool_cls.methods['tostr()'] = bool_to_str
+    bool_cls.methods['==(_)'] = bool_equ
+    bool_cls.methods['hash()'] = bool_hash
 
-    bool_cls.methods['_tostr(_)'] = _bool_to_str
-    bool_cls.methods['_==(_,_)'] = _bool_equ
-    bool_cls.methods['_hash(_)'] = _bool_hash
+    bool_cls.methods['_tostr()'] = _bool_to_str
+    bool_cls.methods['_==(_)'] = _bool_equ
+    bool_cls.methods['_hash()'] = _bool_hash
 
 def str_to_str(start, args):
     obj = args[start].obj()
@@ -359,23 +344,23 @@ def _str_numbers(obj):
     return ret
 
 def str_bind_methods():
-    str_cls.methods['tostr(_)'] = str_to_str
-    str_cls.methods['==(_,_)'] = str_equ
-    str_cls.methods['hash(_)'] = str_hash
-    str_cls.methods['+(_,_)'] = str_add
-    str_cls.methods['at(_,_)'] = str_at
-    str_cls.methods['len(_)'] = str_len
-    str_cls.methods['empty(_)'] = str_emtpy
-    str_cls.methods['numbers(_)'] = str_numbers
+    str_cls.methods['tostr()'] = str_to_str
+    str_cls.methods['==(_)'] = str_equ
+    str_cls.methods['hash()'] = str_hash
+    str_cls.methods['+(_)'] = str_add
+    str_cls.methods['at(_)'] = str_at
+    str_cls.methods['len()'] = str_len
+    str_cls.methods['empty()'] = str_emtpy
+    str_cls.methods['numbers()'] = str_numbers
 
-    str_cls.methods['_tostr(_)'] = _str_to_str
-    str_cls.methods['_==(_,_)'] = _str_equ
-    str_cls.methods['_hash(_)'] = _str_hash
-    str_cls.methods['_+(_,_)'] = _str_add
-    str_cls.methods['_at(_,_)'] = _str_at
-    str_cls.methods['_len(_)'] = _str_len
-    str_cls.methods['_empty(_)'] = _str_emtpy
-    str_cls.methods['_numbers(_)'] = _str_numbers
+    str_cls.methods['_tostr()'] = _str_to_str
+    str_cls.methods['_==(_)'] = _str_equ
+    str_cls.methods['_hash()'] = _str_hash
+    str_cls.methods['_+(_)'] = _str_add
+    str_cls.methods['_at(_)'] = _str_at
+    str_cls.methods['_len()'] = _str_len
+    str_cls.methods['_empty()'] = _str_emtpy
+    str_cls.methods['_numbers()'] = _str_numbers
 
 def int_to_str(start, args):
     obj = args[start].obj()
@@ -527,18 +512,18 @@ def int_le(start, args):
 
 
 def int_bind_methods():
-    int_cls.methods['tostr(_)'] = int_to_str
-    int_cls.methods['==(_,_)'] = int_equ
-    int_cls.methods['hash(_)'] = int_hash
-    int_cls.methods['float(_)'] = int_to_float
-    int_cls.methods['+(_,_)'] = int_add
-    int_cls.methods['-(_,_)'] = int_sub
-    int_cls.methods['*(_,_)'] = int_mul
-    int_cls.methods['/(_,_)'] = int_div
-    int_cls.methods['%(_,_)'] = int_mod
-    int_cls.methods['>(_,_)'] = int_gt
-    int_cls.methods['>=(_,_)'] = int_ge
-    int_cls.methods['<(_,_)'] = int_lt
+    int_cls.methods['tostr()'] = int_to_str
+    int_cls.methods['==(_)'] = int_equ
+    int_cls.methods['hash()'] = int_hash
+    int_cls.methods['float()'] = int_to_float
+    int_cls.methods['+(_)'] = int_add
+    int_cls.methods['-(_)'] = int_sub
+    int_cls.methods['*(_)'] = int_mul
+    int_cls.methods['/(_)'] = int_div
+    int_cls.methods['%(_)'] = int_mod
+    int_cls.methods['>(_)'] = int_gt
+    int_cls.methods['>=(_)'] = int_ge
+    int_cls.methods['<(_)'] = int_lt
     int_cls.methods['<=(_,_)'] = int_le
     
     int_cls.methods['_tostr(_)'] = _int_to_str
@@ -672,18 +657,18 @@ def float_le(start, args):
 
 
 def float_bind_methods():
-    float_cls.methods['tostr(_)'] = float_to_str
-    float_cls.methods['==(_,_)'] = float_equ
-    float_cls.methods['hash(_)'] = float_hash
-    float_cls.methods['int(_)'] = float_to_int
-    float_cls.methods['+(_,_)'] = float_add
-    float_cls.methods['-(_,_)'] = float_sub
-    float_cls.methods['*(_,_)'] = float_mul
-    float_cls.methods['/(_,_)'] = float_div
-    float_cls.methods['>(_,_)'] = float_gt
-    float_cls.methods['>=(_,_)'] = float_ge
-    float_cls.methods['<(_,_)'] = float_lt
-    float_cls.methods['<=(_,_)'] = float_le
+    float_cls.methods['tostr()'] = float_to_str
+    float_cls.methods['==(_)'] = float_equ
+    float_cls.methods['hash()'] = float_hash
+    float_cls.methods['int()'] = float_to_int
+    float_cls.methods['+(_)'] = float_add
+    float_cls.methods['-(_)'] = float_sub
+    float_cls.methods['*(_)'] = float_mul
+    float_cls.methods['/(_)'] = float_div
+    float_cls.methods['>(_)'] = float_gt
+    float_cls.methods['>=(_)'] = float_ge
+    float_cls.methods['<(_)'] = float_lt
+    float_cls.methods['<=(_)'] = float_le
 
     float_cls.methods['_tostr(_)'] = _float_to_str
     float_cls.methods['_==(_,_)'] = _float_equ
@@ -759,12 +744,12 @@ def list_remove(start, args):
 
 
 def list_bind_methods():
-    list_cls.methods['len(_)'] = list_len
-    list_cls.methods['tostr(_)'] = list_to_str
-    list_cls.methods['insert(_,_,_)'] = list_insert
-    list_cls.methods['at(_,_)'] = list_at
-    list_cls.methods['remove(_,_)'] = list_remove
-    list_cls.methods['append(_,_)'] = list_append
+    list_cls.methods['len()'] = list_len
+    list_cls.methods['tostr()'] = list_to_str
+    list_cls.methods['insert(_,_)'] = list_insert
+    list_cls.methods['at(_)'] = list_at
+    list_cls.methods['remove(_)'] = list_remove
+    list_cls.methods['append(_)'] = list_append
     list_cls.methods['_len(_)'] = _list_len
     list_cls.methods['_tostr(_)'] = _list_to_str
     list_cls.methods['_insert(_,_,_)'] = _list_insert
@@ -823,10 +808,13 @@ def map_to_str(start, args):
 
 
 def map_bind_methods():
-    map_cls.methods['tostr(_)'] = map_to_str
-    map_cls.methods['@put(_,_,_)'] = map_put
-    map_cls.methods['@get(_,_)'] = map_get
-    map_cls.methods['@remove(_,_)'] = map_remove
+    map_cls.methods['tostr()'] = map_to_str
+    map_cls.methods['put(_,_)'] = map_put
+    map_cls.methods['get(_)'] = map_get
+    map_cls.methods['remove(_)'] = map_remove
+    map_cls.methods['@put(_,_)'] = map_put
+    map_cls.methods['@get(_)'] = map_get
+    map_cls.methods['@remove(_)'] = map_remove
     map_cls.methods['@_tostr(_)'] = _map_to_str
     map_cls.methods['@_put(_,_,_)'] = _map_put
     map_cls.methods['@_get(_,_)'] = _map_get
@@ -1383,6 +1371,4 @@ class Thread(object):
         return None
 
 _bind_methods()
-
-vm = VM()
 

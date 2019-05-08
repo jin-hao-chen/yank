@@ -223,6 +223,13 @@ class Parser(object):
             fatal_print('Parse error, %s' % msg)
             sys.exit(1)
     
+    def error_if_cur_token_type_is_not(self, token_type, msg):
+        if self.cur_token.type != token_type:
+            fatal_print('Parse error, %s' % msg)
+            sys.exit(1)
+        else:
+            self.fetch_next_token()
+    
     def parse_id(self, cur_token):
         while self.next_char_ptr <= self.src_len - 1 and (self.peek_next_char().isalnum() or self.peek_next_char() == '_'):
             self.to_next_char()

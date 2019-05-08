@@ -4,14 +4,16 @@
 
 import os
 import sys
+from pprint import pprint
 from tokentype import *
 from parser import (Token, Parser)
-from objects import (call, call_by_value, exit_if_false, type_to_pystr, is_type, args_num, vm)
+from objects import (call, call_by_value, exit_if_false, type_to_pystr, is_type, args_num)
 from objects import (ObjHeader, ClsObj, NilObj, BoolObj, StrObj, IntObj, \
-        FloatObj, ListObj, MapObj, ModuleObj, FunObj, Value)
+                        FloatObj, ListObj, MapObj, ModuleObj, FunObj, Value)
 from objects import (Thread, Frame)
-from compiler import CompileUnit, Loop
+from compiler import (CompileUnit, Loop)
 from opcode import opcode_print
+from vm import VM
 
 
 def run_file(argv=None):
@@ -56,10 +58,12 @@ def test_object_api():
 
 
 def test_compiler():
+    vm = VM()
     parser = Parser('./example.y')
     cu = CompileUnit(parser)
     cu.emit_load_constant('1')
     opcode_print(cu.fun.stream)
+    pprint(vm.method_names)
     
 
 def main(argv=None):
