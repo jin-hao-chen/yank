@@ -24,6 +24,7 @@ TOKEN_TYPE_FALSE = 17
 TOKEN_TYPE_CONTINUE = 18
 TOKEN_TYPE_DEL = 19
 
+
 keyword_strs = {
         'if': TOKEN_TYPE_IF,
         'elif': TOKEN_TYPE_ELIF,

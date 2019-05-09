@@ -72,8 +72,6 @@ class Symbol(object):
         self.id = None
         self.led = None
         self.nud = None
-        # 用于语法和语义分析
-        self.sign_fn = None
         self.lbp = BP_NONE
 
 """
@@ -94,9 +92,6 @@ mix_operator
 
 # nud和led定义区
 
-# 数字和字符串的nud
-def literal_nud(cu):
-    cu.emit_load_constant()
 
 # 标签函数定义区
 
@@ -109,11 +104,10 @@ def prefix_symbol(nud):
     sym.nud = nud
     return sym
 
-def prefix_operator(id_, nud, sign_fn):
+def prefix_operator(id_, nud):
     sym = Symbol()
     sym.id = id_
     sym.nud = nud
-    sym.sign_fn = sign_fn 
     return sym
 
 def infix_symbol(led):
@@ -121,20 +115,44 @@ def infix_symbol(led):
     sym.led = led
     return sym
 
-def infix_operator(id_, led, sign_fn, lbp):
+def infix_operator(id_, led, lbp):
     sym = Symbol()
     sym.id = id_
-    sym.led = sign_fn
     sym.lbp = lbp
 
-def mix_operator(id_, led, nud, sign_fn, lbp):
+def mix_operator(id_, led, nud, lbp):
     sym = Symbol()
     sym.led = led
     sym.nud = nud
-    sym.sign_fn = sign_fn
     sym.lbp = lbp
     return sym
 
+# int, float, str
+def literal_nud(cu):
+    cu.emit_load_constant(cu.cur_parser.pre_token.str)
+
+# bool
+def boolean_nud(cu):
+    cu.write_opcode(opcode.PUSH_TRUE if cu.cur_parser.pre_token.type == TOKEN_TYPE_TRUE else opcode.PUSH_FALSE)
+
+# (
+def parentheses_nud(cu):
+    expression(cu, BP_LOWEST)
+    cu.cur_parser.error_if_cur_token_type_is_not(TOKEN_TYPE_RIGHT_PARENT, "parentheses doesn't match")
+
+# .
+def call_led(cu):
+    cu.cur_parser.error_if_cur_token_type_is_not(TOKEN_TYPE_ID, "expect id after '.'")
+    sign_name = cu.cur_parser.pre_token.str + '('
+    # 处理调用实参
+    arg_num = cu.handle_args()
+    for i in range(arg_num):
+        sign_name += '_,'
+    if not arg_num:
+        sign_name += ')'
+    else:
+        sign_name = sign_name[:-1] + ')'
+    cu.emit_call(sign_name, arg_num)
 
 # 定义各种运算符的led与nud方法, 再绑定上去
 
@@ -145,7 +163,46 @@ symbol_rules = [unused_rule(), # if
                 unused_rule(), # in
                 unused_rule(), # while
                 unused_rule(), # break
-                prefix_symbol(nud), # not
+                unused_rule(), # not ?
+                unused_rule(), # and ?
+                unused_rule(), # or ?
+                unused_rule(), # return ?
+                unused_rule(), # import ?
+                unused_rule(), # fun ?
+                unused_rule(), # class ?
+                unused_rule(), # let
+                unused_rule(), # global
+                prefix_symbol(boolean_nud), # true
+                prefix_symbol(boolean_nud), # false
+                unused_rule(), # continue
+                unused_rule(), # del
+                unused_rule(), # + ?
+                unused_rule(), # - ?
+                unused_rule(), # * ?
+                unused_rule(), # / ?
+                unused_rule(), # % ?
+                unused_rule(), # ** ?
+                unused_rule(), # ==?
+                unused_rule(), # != ?
+                unused_rule(), # >?
+                unused_rule(), # <?
+                unused_rule(), # >=?
+                unused_rule(), # <=?
+                unused_rule(), # =
+                unused_rule(), # &?
+                unused_rule(), # |?
+                unused_rule(), # ^?
+                unused_rule(), # ~?
+                unused_rule(), # <<?
+                unused_rule(), # >>?
+                prefix_symbol(literal_nud), # num
+                prefix_symbol(literal_nud), # str
+                unused_rule(), # ,
+                infix_symbol(call_led), # .方法调用
+                unused_rule(), # :
+                unused_rule(), # ;
+                prefix_symbol(parentheses_nud), # (
+                unused_rule(), # )
                ] 
 
 
@@ -206,8 +263,8 @@ class CompileUnit(object):
             return sign.name + s[:-1] + ']=(_)'
     
     # 字符串和数据字面量比较特别, 与其他变量相比, 他们是常量, 要放到常量表中
-    def emit_load_constant(self, value):
-        idx = self.fun.add_constant(value)
+    def emit_load_constant(self, var):
+        idx = self.fun.add_constant(var)
         self.write_opcode_operand(opcode.LOAD_CONST, idx)
     
     def emit_load_local_variable(self):
@@ -234,7 +291,7 @@ class CompileUnit(object):
         return self.fun.stream_num - 2
     
     # 这种一般operand在栈中
-    def write_opcode(self, opcode):
+    def write_opcode(self, op):
         self.fun.stream.append(op)
         self.fun.stream_num += 1
         return self.fun.stream_num - 1
@@ -264,7 +321,17 @@ class CompileUnit(object):
         pass
     
     def handle_args(self):
-        pass
+        self.cur_parser.error_if_cur_token_type_is_not(TOKEN_TYPE_LEFT_PARENT, "expect '(' after method name")
+        arg_num = 0
+        if not self.cur_parser.cur_token.type == TOKEN_TYPE_RIGHT_PARENT:
+            arg_num += 1
+            # has args
+            expression(self, BP_LOWEST)
+            while self.cur_parser.to_next_token_if_cur_token_type_is(TOKEN_TYPE_COMMA):
+                arg_num += 1
+                expression(self, BP_LOWEST)
+            self.cur_parser.error_if_cur_token_type_is_not(TOKEN_TYPE_RIGHT_PARENT, "parentheses doesn't match") 
+        return arg_num
 
     def handle_parameters(self):
         pass
@@ -297,16 +364,23 @@ class CompileUnit(object):
         pass
 
     def emit_call(self, name, arg_num):
-        idx = self.vm.fine_method_name(name)
-        if idx == -1:
+        # name is method name
+        # s格式为nil0|bool2|str1, 在运行时再根据类型找方法来调用
+        s = ''
+        for cls in self.vm.builtin_clses:
+            try: 
+                idx = cls.method_names.index(name)
+                s += cls.name + str(idx) + '|'
+            except ValueError:
+                pass
+        if not s:
             fatal_print('%s is not defined' % name)
             sys.exit(1)
-        self.write_opcode_operand(opcode.CALL0 + arg_num, idx)
+        self.write_opcode_operand(opcode.CALL0 + arg_num, s[:-1])
 
     def emit_call_by_sign(self, sign):
         sign_name = self.sign_to_str(sign)
         self.emit_call(sign_name, sign.arg_num)
-    
 
 
 class Loop(object):
@@ -322,11 +396,12 @@ class Loop(object):
 
 def main(argv=None):
     vm = VM()
-    cu = CompileUnit(Parser('./example.y'), vm)
-    sign = MethodSign(SIGN_SUB_SETTER, 'my_method')
-    sign.arg_num = 2
-    print(cu.sign_to_str(sign))
-    print(cu.emit_call(cu.sign_to_str(sign), 2))
+    cu = CompileUnit(Parser('./demo.y'), vm)
+    cu.cur_parser.fetch_next_token()    
+    cu.cur_parser.fetch_next_token()
+    cu.cur_parser.fetch_next_token()
+    call_led(cu)
+    opcode.opcode_print(cu.fun.stream)
 
 
 if __name__ == '__main__':

@@ -19,6 +19,8 @@ class VM(object):
         self.list_cls = list_cls
         self.map_cls = map_cls
         self.module_cls = module_cls
+        self.builtin_clses = [fun_cls, nil_cls, bool_cls, str_cls, int_cls, float_cls, list_cls, map_cls, module_cls]
+        """
         self.method_names = ['nil.tostr()', 'nil.==(_)', 'nil.hash(_)',
                             'bool.tostr()', 'bool.==(_)', 'bool.hash()',
                             'str.tostr()', 'str.==(_)', 'str.hash()','str.+(_)', 
@@ -33,17 +35,7 @@ class VM(object):
                             'list.remove(_)', 'list.append(_)', 'map.tostr()', 
                             'map.put(_,_)', 'map.get(_)', 'map.remove(_)', 'map.@put(_,_)',
                             'map.@get(_)', 'map.@remove(_)']
-
-
-    def add_method_name(self, name):
-        self.method_names.append(name)
-        return len(self.method_names) - 1  
-
-    def fine_method_name(self, name):
-        try:
-            return self.method_names.index(name)
-        except ValueError:
-            return -1
+        """
     
     def build_core_module(self):
         pass

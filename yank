@@ -60,7 +60,7 @@ def test_object_api():
 def test_compiler():
     vm = VM()
     parser = Parser('./example.y')
-    cu = CompileUnit(parser)
+    cu = CompileUnit(parser, vm)
     cu.emit_load_constant('1')
     opcode_print(cu.fun.stream)
     pprint(vm.method_names)

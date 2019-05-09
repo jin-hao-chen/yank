@@ -50,7 +50,9 @@ END = 100
 def opcode_print(stream):
     ptr = 0
     stream_len = len(stream)
+    i = 0
     while ptr < stream_len:
+        i += 1
         op = stream[ptr]
         s = ''
         if op == LOAD_CONST:
@@ -58,5 +60,115 @@ def opcode_print(stream):
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
+        elif op == PUSH_TRUE:
+            s += 'PUSH_TRUE '
+        elif op == PUSH_FALSE:
+            s += 'PUSH_FALSE'
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL1:
+            s += 'CALL1 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL2:
+            s += 'CALL2 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == CALL0:
+            s += 'CALL0 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
         ptr += 1
-        print(s)
+        print(str(i) + ' ' + s)
+
