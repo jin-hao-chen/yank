@@ -106,7 +106,17 @@ class ModuleObj(object):
         self.obj_header = ObjHeader(OT_MODULE, module_cls, self)
         self.name = name
         self.module_var_names = []
+        self.module_var_name_len = 0
         self.module_var_values = []
+
+    def add_module_var(self, name):
+        for i in range(len(self.module_var_names)):
+            if self.module_var_names[i] == name:
+                return i
+        self.module_var_names.append(name)
+        # self.module_var_values.append(value) 
+        self.module_var_name_len += 1
+        return self.module_var_name_len - 1
 
 
 class FunObj(object):

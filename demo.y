@@ -1,1 +1,1 @@
-a.get('key')
+m = Map()

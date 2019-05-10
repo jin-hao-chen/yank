@@ -6,7 +6,7 @@ import sys
 from tokentype import *
 from color_print import warning_print
 import opcode
-from objects import FunObj
+from objects import (FunObj, ModuleObj)
 from parser import Parser
 from objects import args_num
 from vm import VM
@@ -15,15 +15,16 @@ from color_print import fatal_print
 
 BP_NONE = 0
 BP_LOWEST = 1
-BP_CONDITION = 2
-BP_LOGIC_OR = 3 # or
-BP_LOGIC_AND = 4 # and
-BP_EQUAL = 5 # ==
-BP_IS = 6 # is
-BP_CMP = 7 # <=, >=, <, >
-BP_BIT_OR = 8 # |
-BP_BIT_AND = 9 # &
-BP_BIT_SHIFT = 10 # >>, <<
+BP_ASSIGN = 2
+BP_CONDITION = 3
+BP_LOGIC_OR = 4 # or
+BP_LOGIC_AND = 5 # and
+BP_EQUAL = 6 # ==
+BP_IS = 7 # is
+BP_CMP = 8 # <=, >=, <, >
+BP_BIT_OR = 9 # |
+BP_BIT_AND = 10 # &
+BP_BIT_SHIFT = 11 # >>, <<
 BP_BIT_TERM = 12 # +, -
 BP_BIT_FACTOR = 13 # *, /
 BP_BIT_UNARY = 14 # not, -, ~
@@ -39,8 +40,8 @@ SIGN_SUB_GETTER = 5
 
 
 SCOPE_INVALID = 1
-SCOPE_LOCAL = 2
-SCOPE_MODULE = 3
+SCOPE_MODULE = 2
+SCOPE_LOCAL = 3
 
 
 class Var(object):
@@ -110,8 +111,9 @@ def prefix_operator(id_, nud):
     sym.nud = nud
     return sym
 
-def infix_symbol(led):
+def infix_symbol(led, lbp):
     sym = Symbol()
+    sym.lbp = lbp
     sym.led = led
     return sym
 
@@ -119,6 +121,8 @@ def infix_operator(id_, led, lbp):
     sym = Symbol()
     sym.id = id_
     sym.lbp = lbp
+    sym.led = led
+    return sym
 
 def mix_operator(id_, led, nud, lbp):
     sym = Symbol()
@@ -154,62 +158,121 @@ def call_led(cu):
         sign_name = sign_name[:-1] + ')'
     cu.emit_call(sign_name, arg_num)
 
+
+# 数学运算符
+def infix_operator_led(cu):
+    rule = symbol_rules[cu.cur_parser.pre_token.type]
+    expression(cu, rule.lbp)
+    cu.emit_call(rule.id + '(_)', 1)
+
+def nil_nud(cu):
+    cu.write_opcode(opcode.PUSH_NIL)
+
+def id_nud(cu):
+    if cu.scope == SCOPE_MODULE:
+        # global var 
+        var = Var(cu.cur_parser.pre_token.str, cu.scope)
+        if cu.cur_parser.to_next_token_if_cur_token_type_is(TOKEN_TYPE_ASSIGN):
+            idx = cu.add_symbol(var)
+            expression(cu, BP_LOWEST)
+            cu.emit_store_module_variable(idx)
+        else:
+            cu.emit_load_module_variable(var)
+    else:
+        # local var
+        var = Var(cu.cur_parser.pre_token.str, cu.scope)
+        if cu.cur_parser.to_next_token_if_cur_token_type_is(TOKEN_TYPE_ASSIGN):
+            idx = cu.add_symbol(var)
+            expression(cu, BP_LOWEST)
+            cu.emit_store_local_variable(idx)
+        else:
+            cu.emit_load_local_variable(var)
+
+# list字面量[
+def list_literal_nud(cu):
+    # pre_token is [
+    if cu.cur_parser.to_next_token_if_cur_token_type_is(TOKEN_TYPE_RIGHT_BRACKET):
+        # empty
+        cu.emit_load_module_variable()
+        pass
+    else:
+        expression(cu, BP_LOWEST)
+        while cu.cur_parser.to_next_token_if_cur_token_type_is(TOKEN_TYPE_COMMA):
+            expression(cu, BP_LOWEST)
+        pass
+    pass
+
 # 定义各种运算符的led与nud方法, 再绑定上去
 
-symbol_rules = [unused_rule(), # if
-                unused_rule(), # elif
-                unused_rule(), # else
-                unused_rule(), # for,
-                unused_rule(), # in
-                unused_rule(), # while
-                unused_rule(), # break
-                unused_rule(), # not ?
-                unused_rule(), # and ?
-                unused_rule(), # or ?
-                unused_rule(), # return ?
-                unused_rule(), # import ?
-                unused_rule(), # fun ?
-                unused_rule(), # class ?
-                unused_rule(), # let
-                unused_rule(), # global
-                prefix_symbol(boolean_nud), # true
-                prefix_symbol(boolean_nud), # false
-                unused_rule(), # continue
-                unused_rule(), # del
-                unused_rule(), # + ?
-                unused_rule(), # - ?
-                unused_rule(), # * ?
-                unused_rule(), # / ?
-                unused_rule(), # % ?
-                unused_rule(), # ** ?
-                unused_rule(), # ==?
-                unused_rule(), # != ?
-                unused_rule(), # >?
-                unused_rule(), # <?
-                unused_rule(), # >=?
-                unused_rule(), # <=?
-                unused_rule(), # =
-                unused_rule(), # &?
-                unused_rule(), # |?
-                unused_rule(), # ^?
-                unused_rule(), # ~?
-                unused_rule(), # <<?
-                unused_rule(), # >>?
-                prefix_symbol(literal_nud), # num
-                prefix_symbol(literal_nud), # str
-                unused_rule(), # ,
-                infix_symbol(call_led), # .方法调用
-                unused_rule(), # :
-                unused_rule(), # ;
-                prefix_symbol(parentheses_nud), # (
-                unused_rule(), # )
+symbol_rules = [unused_rule(), # if 0
+                unused_rule(), # elif 1
+                unused_rule(), # else 2
+                unused_rule(), # for 3
+                unused_rule(), # in 4
+                unused_rule(), # while 5
+                unused_rule(), # break 6
+                unused_rule(), # not ? 7
+                unused_rule(), # and ? 8
+                unused_rule(), # or ? 9
+                unused_rule(), # return ? 10
+                unused_rule(), # import ? 11
+                unused_rule(), # fun ? 12
+                unused_rule(), # class ? 13
+                unused_rule(), # let 14
+                unused_rule(), # global 15
+                prefix_symbol(boolean_nud), # true 16
+                prefix_symbol(boolean_nud), # false 17
+                unused_rule(), # continue 18
+                unused_rule(), # del 19
+                infix_operator('+', infix_operator_led, BP_BIT_TERM), # + 20
+                infix_operator('-', infix_operator_led, BP_BIT_TERM), # - 21
+                infix_operator('*', infix_operator_led, BP_BIT_FACTOR), # * 22
+                infix_operator('/', infix_operator_led, BP_BIT_FACTOR), # / 23
+                infix_operator('%', infix_operator_led, BP_BIT_FACTOR), # % 24
+                unused_rule(), # ** ? 25
+                unused_rule(), # ==? 26
+                unused_rule(), # != ? 27
+                unused_rule(), # >? 28
+                unused_rule(), # <? 29
+                unused_rule(), # >=? 30
+                unused_rule(), # <=? 31
+                unused_rule(), # = 32
+                unused_rule(), # &? 33
+                unused_rule(), # |? 34
+                unused_rule(), # ^? 35
+                unused_rule(), # ~? 36
+                unused_rule(), # <<? 37
+                unused_rule(), # >>? 38
+                prefix_symbol(literal_nud), # num 39
+                prefix_symbol(literal_nud), # str 40
+                unused_rule(), # , 41
+                infix_symbol(call_led, BP_BIT_CALL), # .方法调用 42
+                unused_rule(), # : 43
+                unused_rule(), # ; 44
+                prefix_symbol(parentheses_nud), # ( 45
+                unused_rule(), # ) 46
+                unused_rule(), # [? 47
+                unused_rule(), # ]? 48
+                unused_rule(), # {? 49
+                unused_rule(), # }? 50
+                unused_rule(), # "? 51
+                unused_rule(), # '? 52
+                unused_rule(), # EOF 53
+                unused_rule(), # unknow 54
+                prefix_symbol(nil_nud), # 55
+                prefix_symbol(id_nud), # 56
+                prefix_symbol(literal_nud), # `
+                unused_rule(), # lines 
+                unused_rule(), # self
                ] 
-
 
 def expression(cu, rbp):
     nud_fun = symbol_rules[cu.cur_parser.cur_token.type].nud
     cu.cur_parser.fetch_next_token()
-    nud_fun(cu) 
+    if not nud_fun:
+        fatal_print('nud is None for token type ' + str(cu.cur_parser.pre_token.type))
+        sys.exit(1)
+    nud_fun(cu)
     while rbp < symbol_rules[cu.cur_parser.cur_token.type].lbp:
         led_fun = symbol_rules[cu.cur_parser.cur_token.type].led
         cu.cur_parser.fetch_next_token()
@@ -219,16 +282,18 @@ def expression(cu, rbp):
 class CompileUnit(object):
 
 
-    def __init__(self, parser, vm, fun_name='CORE', scope=SCOPE_MODULE):
+    def __init__(self, parser, vm, fun_name='CORE', module=None, scope=SCOPE_MODULE):
         self.cur_parser = parser
         self.vm = vm
         parser.cur_cu = self
         self.scope = scope
         self.fun = FunObj(fun_name)
+        # 运行时栈局部变量索引与local_vars符号表的索引一致
         self.local_vars = []
         self.local_var_num = 0
         self.outter_cu = None
         self.cur_loop = None
+        self.module = ModuleObj('CORE')
     
     def add_symbol(self, var):
         for i in range(len(self.local_vars)): 
@@ -267,20 +332,25 @@ class CompileUnit(object):
         idx = self.fun.add_constant(var)
         self.write_opcode_operand(opcode.LOAD_CONST, idx)
     
-    def emit_load_local_variable(self):
-        pass
+    # 对于变量来说, 现有store, 再有load, store在没有变量的时候在栈中创建对象, 在有变量的时候赋值
+    def emit_load_local_variable(self, var):
+        idx = self.add_symbol(var)
+        self.write_opcode_operand(opcode.LOAD_LOCAL, idx)
+        var.idx = idx
 
-    def emit_load_module_variable(self):
-        pass
+    def emit_load_module_variable(self, var):
+        idx = self.module.add_module_var(var)
+        self.write_opcode_operand(opcode.LOAD_GLOBAL, idx)
+        var.idx = idx
     
-    def emit_store_local_variable(self):
-        pass
+    def emit_store_local_variable(self, idx):
+        self.write_opcode_operand(opcode.STORE_LOCAL, idx) 
 
-    def emit_store_module_variable(self):
-        pass
+    def emit_store_module_variable(self, idx):
+        self.write_opcode_operand(opcode.STORE_GLOBAL, idx)
 
-    def emit_store_constant(self):
-        pass
+    def emit_store_constant(self, idx):
+        self.write_opcode_operand(opcode.STORE_CONST, idx)
     
     # 这种一般operand就是写在指令流中
     def write_opcode_operand(self, op, operand):
@@ -330,7 +400,7 @@ class CompileUnit(object):
             while self.cur_parser.to_next_token_if_cur_token_type_is(TOKEN_TYPE_COMMA):
                 arg_num += 1
                 expression(self, BP_LOWEST)
-            self.cur_parser.error_if_cur_token_type_is_not(TOKEN_TYPE_RIGHT_PARENT, "parentheses doesn't match") 
+        self.cur_parser.error_if_cur_token_type_is_not(TOKEN_TYPE_RIGHT_PARENT, "parentheses doesn't match") 
         return arg_num
 
     def handle_parameters(self):
@@ -397,10 +467,12 @@ class Loop(object):
 def main(argv=None):
     vm = VM()
     cu = CompileUnit(Parser('./demo.y'), vm)
-    cu.cur_parser.fetch_next_token()    
+    cu.scope = SCOPE_LOCAL
     cu.cur_parser.fetch_next_token()
-    cu.cur_parser.fetch_next_token()
-    call_led(cu)
+    while True:
+        if cu.cur_parser.cur_token.type == TOKEN_TYPE_EOF:
+            break
+        expression(cu, BP_LOWEST)
     opcode.opcode_print(cu.fun.stream)
 
 

@@ -79,93 +79,115 @@ def opcode_print(stream):
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL3:
+            s += 'CALL3 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL4:
+            s += 'CALL4 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL5:
+            s += 'CALL5 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL6:
+            s += 'CALL6 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL7:
+            s += 'CALL7 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL8:
+            s += 'CALL8 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL9:
+            s += 'CALL9 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL10:
+            s += 'CALL10 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL11:
+            s += 'CALL11'
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL12:
+            s += 'CALL12 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL13:
+            s += 'CALL13 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL14:
+            s += 'CALL14 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL15:
+            s += 'CALL15 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL16:
+            s += 'CALL16 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL17:
+            s += 'CALL17 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL18:
+            s += 'CALL18 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL19:
+            s += 'CALL19 '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
-        elif op == CALL0:
-            s += 'CALL0 '
+        elif op == CALL20:
+            s += 'CALL20 '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == PUSH_NIL:
+            s += 'PUSH_NIL '
+        elif op == LOAD_LOCAL:
+            s += 'LOAD_LOCAL '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == LOAD_GLOBAL:
+            s += 'LOAD_GLOBAL '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == STORE_LOCAL:
+            s += 'STORE_LOCAL '
+            ptr += 1
+            operand = stream[ptr]
+            s += str(operand)
+        elif op == STORE_GLOBAL:
+            s += 'STORE_GLOBAL '
             ptr += 1
             operand = stream[ptr]
             s += str(operand)
